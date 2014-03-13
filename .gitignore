@@ -1,2 +1,6 @@
 
 *.sqlite
+
+scraper/config.json
+
+*.pyc
