@@ -12,3 +12,7 @@ def getContent(url):
 
 def getText(element):
     return clean(element.find(text=True))
+
+def getAllText(element):
+    text = element.find_all(text=True)
+    return [ clean(t) for t in text ]

@@ -19,8 +19,9 @@ def getCities():
             if city.string not in cityNames:
                 print 'Adding ' + city.string
                 cityNames.append(city.string)
-                citiesFound.append({ 
+                citiesFound.append({
                     'name': city.string,
+                    'locality': locality.string,
                     'baseUrl': city['href'][:city['href'].find('Food-List-ByName')],
                     'establishmentUrl': city['href'].replace('Count=30', 'Count=10000')
                 })
@@ -40,6 +41,7 @@ def getEstablishments(city):
                 'url': details[0].a['href'],
                 'address': scrapertools.getText(details[2]),
                 'city': city['name'],
+                'locality': city['locality'],
                 'last_inspection_date': scrapertools.getText(details[3])
             })
     
@@ -78,8 +80,8 @@ def getViolations(inspectionDetailsUrl):
         details = violation.find_all('td')
         
         violationsFound.append({
-            'code': scrapertools.getText(details[0]),
-            'observations': scrapertools.getText(details[1])
+            'code': scrapertools.getAllText(details[0]),
+            'observations': scrapertools.getAllText(details[1])
         })
     return violationsFound
 
