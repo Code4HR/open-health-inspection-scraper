@@ -9,8 +9,8 @@ def getCities():
     cityNames = []
     
     localityList = scrapertools.getContent(BASE_URL + LOCALITY_LIST_URL)
-    localities = localityList.body.div.p.find_next_siblings('a')
-    
+    localities = localityList.body.div.img.find_all_next('a')
+
     for locality in localities:
         cityList = scrapertools.getContent(BASE_URL + locality['href'] + CITY_LIST_URL)
         cities = cityList.find_all('a')
@@ -25,26 +25,30 @@ def getCities():
                     'baseUrl': city['href'][:city['href'].find('Food-List-ByName')],
                     'establishmentUrl': city['href'].replace('Count=30', 'Count=10000')
                 })
-    
+
     return citiesFound
 
 def getEstablishments(city):
     establishmentsFound = []
-    
+
     establishmentList = scrapertools.getContent(BASE_URL + city['establishmentUrl'])
     establishments = establishmentList.find_all('tr')
     for establishment in establishments:
         details = establishment.find_all('td')
         if len(details) == 4 and details[0] is not None and details[0].a is not None:
+
+            geo = scrapertools.getLatLng(scrapertools.getText(details[2]), city["name"])
+
             establishmentsFound.append({
                 'name': scrapertools.getText(details[0]),
                 'url': details[0].a['href'],
                 'address': scrapertools.getText(details[2]),
                 'city': city['name'],
                 'locality': city['locality'],
+                'geo': {'type': "Point", 'coordinates': [geo['lat'], geo['lng']]},
                 'last_inspection_date': scrapertools.getText(details[3])
             })
-    
+
     return establishmentsFound
 
 def getInspections(establishment, cityUrl):
