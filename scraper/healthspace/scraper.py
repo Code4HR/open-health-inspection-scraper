@@ -49,8 +49,6 @@ def getEstablishments(city):
                 'last_inspection_date': scrapertools.getText(details[3])
             })
 
-            print establishmentsFound
-            exit(0)
     return establishmentsFound
 
 def getInspections(establishment, cityUrl):
