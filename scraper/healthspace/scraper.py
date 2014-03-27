@@ -85,7 +85,11 @@ def getViolations(inspectionDetailsUrl):
         
         violationsFound.append({
             'code': scrapertools.getAllText(details[0]),
-            'observations': scrapertools.getAllText(details[1])
+            'repeat': any(['Repeat' in tag.string for tag in details[1].contents if tag.name == 'b']),
+            'critical': any(['Critical' in tag.string for tag in details[1].contents if tag.name == 'b']),
+            'corrected': any(['Corrected' in tag.string for tag in details[1].contents if tag.name == 'b']),
+            'correction': ' '.join([tag.string for tag in details[1].contents if tag.name == 'font']).strip(),
+            'observation': ' '.join([tag.string for tag in details[1].contents if tag.name == None]).strip()
         })
     return violationsFound
 
