@@ -37,17 +37,12 @@ def getEstablishments(city):
     for establishment in establishments:
         details = establishment.find_all('td')
         if len(details) == 4 and details[0] is not None and details[0].a is not None:
-
-            geo = scrapertools.getLatLng(scrapertools.getText(details[2]), city["name"])
-
-
             establishmentsFound.append({
                 'name': scrapertools.getText(details[0]),
                 'url': details[0].a['href'],
                 'address': scrapertools.getText(details[2]),
                 'city': city['name'],
                 'locality': city['locality'],
-                'geo': {'type': "Point", 'coordinates': [geo['lat'], geo['lng']]},
                 'last_inspection_date': scrapertools.getText(details[3])
             })
 
@@ -56,9 +51,11 @@ def getEstablishments(city):
 
 def getEstablishmentDetails(establishment):
     establishmentDetails = scrapertools.getContent(BASE_URL + establishment['url'])
-    establishmentType = establishmentDetails.find(text=re.compile("Facility Type")).parent.next_sibling.string
+    geo = scrapertools.getLatLng(establishment['address'], establishment['city'])
+    establishment['geo'] = {'type': "Point", 'coordinates': [geo['lat'], geo['lng']]}
+    establishment['type'] = establishmentDetails.find(text=re.compile("Facility Type")).parent.next_sibling.string
 
-    return establishmentType
+    return establishment
 
 
 def getInspections(establishment, cityUrl):
