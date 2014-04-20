@@ -19,5 +19,6 @@ for city in cities:
             continue
         
         print establishment['name']
+        establishment['type'] = scraper.getEstablishmentDetails(establishment)
         establishment['inspections'] = scraper.getInspections(establishment, city['baseUrl'])
         vaEstablishments.insert(establishment)

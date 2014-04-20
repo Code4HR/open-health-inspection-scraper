@@ -1,4 +1,5 @@
 import scrapertools
+import re
 
 BASE_URL = 'http://www.healthspace.com/'
 LOCALITY_LIST_URL = 'Clients/VDH/vdh_website.nsf/Main-HealthRegions?OpenView&Count=10000'
@@ -39,6 +40,7 @@ def getEstablishments(city):
 
             geo = scrapertools.getLatLng(scrapertools.getText(details[2]), city["name"])
 
+
             establishmentsFound.append({
                 'name': scrapertools.getText(details[0]),
                 'url': details[0].a['href'],
@@ -51,12 +53,20 @@ def getEstablishments(city):
 
     return establishmentsFound
 
+
+def getEstablishmentDetails(establishment):
+    establishmentDetails = scrapertools.getContent(BASE_URL + establishment['url'])
+    establishmentType = establishmentDetails.find(text=re.compile("Facility Type")).parent.next_sibling.string
+
+    return establishmentType
+
+
 def getInspections(establishment, cityUrl):
     inspectionsFound = []
     
     establishmentDetails = scrapertools.getContent(BASE_URL + establishment['url'])
-    inspections = establishmentDetails.find_all(text='Inspection Type')[0].find_parent('table').find_all('tr')
-    
+    inspections = establishmentDetails.find_all(text='Inspection Type')[0].find_parent('tr').find_all_next('tr')
+
     for inspection in inspections:
         details = inspection.find_all('td')
         
@@ -77,14 +87,15 @@ def getViolations(inspectionDetailsUrl):
     
     inspectionDetails = scrapertools.getContent(inspectionDetailsUrl)
     violations = inspectionDetails.find(text='Violations:').find_next('table')
+
     if violations is None:
         return []
-    violations = violations.find_all('tr')
+    violations = violations.find('tr').find_next_siblings()
     for violation in violations:
         details = violation.find_all('td')
-        
+
         violationsFound.append({
-            'code': scrapertools.getAllText(details[0]),
+            'code': scrapertools.getAllText(details[0])[0],
             'repeat': any(['Repeat' in tag.string for tag in details[1].contents if tag.name == 'b']),
             'critical': any(['Critical' in tag.string for tag in details[1].contents if tag.name == 'b']),
             'corrected': any(['Corrected' in tag.string for tag in details[1].contents if tag.name == 'b']),
