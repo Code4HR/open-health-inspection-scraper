@@ -41,7 +41,6 @@ def getEstablishments(city):
                 'name': scrapertools.getText(details[0]),
                 'url': details[0].a['href'],
                 'address': scrapertools.getText(details[2]),
-                'city': city['name'],
                 'locality': city['locality'],
                 'last_inspection_date': scrapertools.getText(details[3])
             })
@@ -51,6 +50,9 @@ def getEstablishments(city):
 
 def getEstablishmentDetails(establishment):
     establishmentDetails = scrapertools.getContent(BASE_URL + establishment['url'])
+    establishment['city'] =  re.sub('(<(/)?br>)|(\r)|(\n)',
+                                    '',
+                                    str(establishmentDetails.find(text=re.compile("Facility Location")).parent.next_sibling.find('br')))
     geo = scrapertools.getLatLng(establishment['address'], establishment['city'])
     establishment['geo'] = {'type': "Point", 'coordinates': [geo['lat'], geo['lng']]}
     establishment['type'] = establishmentDetails.find(text=re.compile("Facility Type")).parent.next_sibling.string

@@ -23,11 +23,12 @@ def getLatLng(address, city):
     """ Need to implement status code-based error handling
         Currently exits on anything other than "OK" """
 
-    api_url = "http://maps.googleapis.com/maps/api/geocode/json?sensor=false&address="
+    api_url = "http://maps.googleapis.com/maps/api/geocode/json?sensor=false" \
+              "&components=country:US|administrative_area_level_2:VA" \
+              "&address="
     #api_key = ""
 
-    url = api_url + urllib.quote_plus(address + " in " + city + ", VA")  #+ "&key=" + api_key
-
+    url = api_url + urllib.quote_plus(address + city + ", VA")  #+ "&key=" + api_key
     result = json.load(urllib.urlopen(url))
 
     if result['status'] == "OK":
