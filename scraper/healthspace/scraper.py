@@ -17,12 +17,13 @@ def getCities():
         cities = cityList.find_all('a')
         
         for city in cities:
-            if city.string not in cityNames:
-                print 'Adding ' + city.string
-                cityNames.append(city.string)
+            name = str(city.string).strip()
+            if name not in cityNames:
+                print 'Adding ' + name
+                cityNames.append(name)
                 citiesFound.append({
-                    'name': city.string,
-                    'locality': locality.string,
+                    'name': name,
+                    'locality': str(locality.string).strip(),
                     'baseUrl': city['href'][:city['href'].find('Food-List-ByName')],
                     'establishmentUrl': city['href'].replace('Count=30', 'Count=10000')
                 })

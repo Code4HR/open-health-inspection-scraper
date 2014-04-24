@@ -28,7 +28,8 @@ def getLatLng(address, city):
               "&address="
     #api_key = ""
 
-    url = api_url + urllib.quote_plus(address + city + ", VA")  #+ "&key=" + api_key
+    url = api_url + urllib.quote_plus(str(address).replace('.', '') + " " + city + ", VA")  #+ "&key=" + api_key
+    
     result = json.load(urllib.urlopen(url))
 
     if result['status'] == "OK":
