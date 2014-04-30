@@ -69,7 +69,7 @@ def getInspections(establishment, cityUrl):
 
     for inspection in inspections:
         details = inspection.find_all('td')
-        
+
         if(details[0].a is None):
             continue
         
@@ -86,6 +86,7 @@ def getViolations(inspectionDetailsUrl):
     violationsFound = []
     
     inspectionDetails = scrapertools.getContent(inspectionDetailsUrl)
+
     violations = inspectionDetails.find(text='Violations:').find_next('table')
 
     if violations is None:
