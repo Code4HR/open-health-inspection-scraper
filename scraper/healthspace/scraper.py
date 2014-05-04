@@ -25,7 +25,7 @@ def getCities():
                     'name': name,
                     'locality': str(locality.string).strip(),
                     'baseUrl': city['href'][:city['href'].find('Food-List-ByName')],
-                    'establishmentUrl': city['href'].replace('Count=30', 'Count=10000')
+                    'establishmentUrl': city['href'].replace('Count=30', '')
                 })
 
     return citiesFound
@@ -33,18 +33,27 @@ def getCities():
 def getEstablishments(city):
     establishmentsFound = []
 
-    establishmentList = scrapertools.getContent(BASE_URL + city['establishmentUrl'])
-    establishments = establishmentList.find_all('tr')
-    for establishment in establishments:
-        details = establishment.find_all('td')
-        if len(details) == 4 and details[0] is not None and details[0].a is not None:
-            establishmentsFound.append({
-                'name': scrapertools.getText(details[0]),
-                'url': details[0].a['href'],
-                'address': scrapertools.getText(details[2]),
-                'locality': city['locality'],
-                'last_inspection_date': scrapertools.getText(details[3])
-            })
+    start = 1
+    count = 1000
+    more = True
+
+    while more:
+        establishmentList = scrapertools.getContent(BASE_URL + city['establishmentUrl']+'&start='+str(start)+'&count='+str(count))
+        if establishmentList.find(text='No documents found') is not None:
+            more = False
+            continue
+        start += count
+        establishments = establishmentList.find_all('tr')
+        for establishment in establishments:
+            details = establishment.find_all('td')
+            if len(details) == 4 and details[0] is not None and details[0].a is not None:
+                establishmentsFound.append({
+                    'name': scrapertools.getText(details[0]),
+                    'url': details[0].a['href'],
+                    'address': scrapertools.getText(details[2]),
+                    'locality': city['locality'],
+                    'last_inspection_date': scrapertools.getText(details[3])
+                })
 
     return establishmentsFound
 
