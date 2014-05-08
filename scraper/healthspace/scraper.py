@@ -64,7 +64,8 @@ def getEstablishmentDetails(establishment):
                                     '',
                                     str(establishmentDetails.find(text=re.compile("Facility Location")).parent.next_sibling.find('br')))
     geo = scrapertools.getLatLng(establishment['address'], establishment['city'])
-    establishment['geo'] = {'type': "Point", 'coordinates': [geo['lat'], geo['lng']]}
+    if geo is not None:
+        establishment['geo'] = {'type': 'Point', 'coordinates': [geo['lng'], geo['lat']]}
     establishment['type'] = establishmentDetails.find(text=re.compile("Facility Type")).parent.next_sibling.string
 
     return establishment
