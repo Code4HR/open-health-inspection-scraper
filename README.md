@@ -24,7 +24,7 @@ To run:
 	python scrapeHealthData.py
 	```
 
-4. After your first run through you will need to create a 2dsphere index on the geo field.
+4. After your first run through you will need to create a 2dsphere index on the geo field in MongoDB.
 
     ```
 	db.[state_abb].ensureIndex({'geo': '2dsphere'})
