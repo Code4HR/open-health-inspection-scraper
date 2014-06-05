@@ -1,103 +1,115 @@
 import scrapertools
 import re
+import config
+from datetime import datetime
+
+c = config.load()
 
 BASE_URL = 'http://www.healthspace.com/'
 LOCALITY_LIST_URL = 'Clients/VDH/vdh_website.nsf/Main-HealthRegions?OpenView&Count=10000'
 CITY_LIST_URL = '/Food-CityList'
 
-def getCities():
-    citiesFound = []
-    cityNames = []
+def get_cities():
+    cities_found = []
+    city_names = []
     
-    localityList = scrapertools.getContent(BASE_URL + LOCALITY_LIST_URL)
-    localities = localityList.body.div.img.find_all_next('a')
+    locality_list = scrapertools.get_content(BASE_URL + LOCALITY_LIST_URL)
+    localities = locality_list.body.div.img.find_all_next('a')
 
     for locality in localities:
-        cityList = scrapertools.getContent(BASE_URL + locality['href'] + CITY_LIST_URL)
-        cities = cityList.find_all('a')
+        city_list = scrapertools.get_content(BASE_URL + locality['href'] + CITY_LIST_URL)
+        cities = city_list.find_all('a')
         
         for city in cities:
             name = str(city.string).strip()
-            if name not in cityNames:
-                print 'Adding ' + name
-                cityNames.append(name)
-                citiesFound.append({
+            if name not in city_names:
+                print 'Loading ' + name
+                city_names.append(name)
+                cities_found.append({
                     'name': name,
                     'locality': str(locality.string).strip(),
                     'baseUrl': city['href'][:city['href'].find('Food-List-ByName')],
                     'establishmentUrl': city['href'].replace('Count=30', '')
                 })
 
-    return citiesFound
+    return cities_found
 
-def getEstablishments(city):
-    establishmentsFound = []
+def get_establishments(city):
+    establishments_found = []
 
     start = 1
     count = 1000
     more = True
 
     while more:
-        establishmentList = scrapertools.getContent(BASE_URL + city['establishmentUrl']+'&start='+str(start)+'&count='+str(count))
-        if establishmentList.find(text='No documents found') is not None:
+        establishment_list = scrapertools.get_content(BASE_URL + city['establishmentUrl']+'&start='+str(start)+'&count='+str(count))
+        if establishment_list.find(text='No documents found') is not None:
             more = False
             continue
         start += count
-        establishments = establishmentList.find_all('tr')
+        establishments = establishment_list.find_all('tr')
         for establishment in establishments:
             details = establishment.find_all('td')
             if len(details) == 4 and details[0] is not None and details[0].a is not None:
-                establishmentsFound.append({
-                    'name': scrapertools.getText(details[0]),
+                date = (None if scrapertools.get_text(details[3]) is None
+                        else datetime.strptime(scrapertools.get_text(details[3]), '%d-%b-%Y'))
+                establishments_found.append({
+                    'name': scrapertools.get_text(details[0]),
                     'url': details[0].a['href'],
-                    'address': scrapertools.getText(details[2]),
+                    'address': scrapertools.get_text(details[2]),
                     'locality': city['locality'],
-                    'last_inspection_date': scrapertools.getText(details[3])
+                    'last_inspection_date': date
                 })
 
-    return establishmentsFound
+
+    return establishments_found
 
 
-def getEstablishmentDetails(establishment):
-    establishmentDetails = scrapertools.getContent(BASE_URL + establishment['url'])
-    establishment['city'] =  re.sub('(<(/)?br>)|(\r)|(\n)',
-                                    '',
-                                    str(establishmentDetails.find(text=re.compile("Facility Location")).parent.next_sibling.find('br')))
-    geo = scrapertools.getLatLng(establishment['address'], establishment['city'])
-    if geo is not None:
-        establishment['geo'] = {'type': 'Point', 'coordinates': [geo['lng'], geo['lat']]}
-    establishment['type'] = establishmentDetails.find(text=re.compile("Facility Type")).parent.next_sibling.string
+def get_establishment_details(establishment):
+    establishment_details = scrapertools.get_content(BASE_URL + establishment['url'])
+    establishment['city'] = re.sub('(<(/)?br>)|(\r)|(\n)',
+                                   '',
+                                   str(establishment_details.find(text=re.compile('Facility Location')).parent.next_sibling.find('br')))
+    establishment['type'] = establishment_details.find(text=re.compile("Facility Type")).parent.next_sibling.string
 
     return establishment
 
 
-def getInspections(establishment, cityUrl):
-    inspectionsFound = []
+def get_inspections(establishment, city_url):
+    inspections_found = []
     
-    establishmentDetails = scrapertools.getContent(BASE_URL + establishment['url'])
-    inspections = establishmentDetails.find_all(text='Inspection Type')[0].find_parent('tr').find_all_next('tr')
+    establishment_details = scrapertools.get_content(BASE_URL + establishment['url'])
+    inspections = establishment_details.find_all(text='Inspection Type')[0].find_parent('tr').find_all_next('tr')
 
     for inspection in inspections:
         details = inspection.find_all('td')
 
-        if(details[0].a is None):
+        if details[0].a is None:
             continue
         
-        violations = getViolations(BASE_URL + cityUrl + '/' + details[0].a['href'])
-        inspectionsFound.append({
-            'type': scrapertools.getText(details[0]),
-            'date': scrapertools.getText(details[1]),
+        violations = get_violations(BASE_URL + city_url + '/' + details[0].a['href'])
+        inspections_found.append({
+            'type': scrapertools.get_text(details[0]),
+            'date': datetime.strptime(scrapertools.get_text(details[1]), '%d-%b-%Y'),
             'violations': violations
         })
     
-    return inspectionsFound
+    return inspections_found
 
-def getViolations(inspectionDetailsUrl):
-    violationsFound = []
+def get_establishment_geo(establishment):
+    geo = scrapertools.get_lat_lng(establishment['address'], establishment['city'], c['state'])
+    if geo is not None:
+        establishment['geo'] = {'type': 'Point', 'coordinates': [geo['lng'], geo['lat']]}
+
+    return establishment
+
+
+def get_violations(inspection_details_url):
+    violations_found = []
     
-    inspectionDetails = scrapertools.getContent(inspectionDetailsUrl)
+    inspection_details = scrapertools.get_content(inspection_details_url)
 
-    violations = inspectionDetails.find(text='Violations:').find_next('table')
+    violations = inspection_details.find(text='Violations:').find_next('table')
 
     if violations is None:
         return []
@@ -105,13 +117,13 @@ def getViolations(inspectionDetailsUrl):
     for violation in violations:
         details = violation.find_all('td')
 
-        violationsFound.append({
-            'code': scrapertools.getAllText(details[0])[0],
+        violations_found.append({
+            'code': scrapertools.get_all_text(details[0])[0],
             'repeat': any(['Repeat' in tag.string for tag in details[1].contents if tag.name == 'b']),
             'critical': any(['Critical' in tag.string for tag in details[1].contents if tag.name == 'b']),
             'corrected': any(['Corrected' in tag.string for tag in details[1].contents if tag.name == 'b']),
             'correction': ' '.join([tag.string for tag in details[1].contents if tag.name == 'font']).strip(),
             'observation': ' '.join([tag.string for tag in details[1].contents if tag.name == None]).strip()
         })
-    return violationsFound
+    return violations_found
 

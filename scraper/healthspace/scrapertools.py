@@ -1,7 +1,7 @@
 from bs4 import BeautifulSoup
 import scraperwiki
 import json
-import urllib
+import urllib2
 import re
 import config
 
@@ -12,23 +12,27 @@ def clean(data):
     return data
 
 
-def getContent(url):
-    html = scraperwiki.scrape(url)
+def get_content(url):
+    try:
+        html = scraperwiki.scrape(url)
+    except urllib2.URLError, e:
+        print e.reason
+        exit(1)
     html = str.replace(html, '</=', '&le;')
     html = str.replace(html, '>/=', '&ge;')
     return BeautifulSoup(html)
 
 
-def getText(element):
+def get_text(element):
     return clean(element.find(text=True))
 
 
-def getAllText(element):
+def get_all_text(element):
     text = element.find_all(text=True)
     return [ clean(t) for t in text ]
 
 
-def getLatLng(address, city):
+def get_lat_lng(address, city, state):
     c = config.load()
 
     # If address is a PO Box, skip
@@ -36,14 +40,14 @@ def getLatLng(address, city):
         return None
     else:
         url = 'https://api.smartystreets.com/street-address?'
-        url += 'state=Virginia'
-        url += '&city=' + urllib.quote(str(city))
+        url += 'state=' + urllib2.quote(str(state))
+        url += '&city=' + urllib2.quote(str(city))
         url += '&auth-id=' + c['ss_id']
         url += '&auth-token=' + c['ss_token']
-        url += '&street=' + urllib.quote_plus(str(address))
+        url += '&street=' + urllib2.quote(str(address))
 
         print url
-        result = json.load(urllib.urlopen(url))
+        result = json.load(urllib2.urlopen(url))
 
         if len(result) == 1:
             lat_lng = {'lat': result[0]['metadata']['latitude'], 'lng': result[0]['metadata']['longitude']}
