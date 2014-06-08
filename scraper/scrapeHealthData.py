@@ -20,23 +20,28 @@ for city in cities:
 
     for establishment in establishments:
 
-        establishment = scraper.get_establishment_details(establishment)
-        establishment['inspections'] = scraper.get_inspections(establishment, city['baseUrl'])
-
         existing = va_establishments.find_one({'url': establishment['url']})
-        changed_fields = []
 
         if existing is not None:
-            establishment['_id'] = existing['_id']
-            changed_fields = list(o for o in establishment if existing[o] != establishment[o])
+            if 'last_inspected_date' not in existing or \
+                            existing['last_inspected_date'] < establishment['last_inspected_date']:
+                changed_fields = []
+                establishment = scraper.get_establishment_details(establishment)
+                establishment['inspections'] = scraper.get_inspections(establishment, city['baseUrl'])
+                establishment['_id'] = existing['_id']
+                changed_fields = list(o for o in establishment if existing[o] != establishment[o])
+            else:
+                continue
         else:
+            establishment = scraper.get_establishment_details(establishment)
+            establishment['inspections'] = scraper.get_inspections(establishment, city['baseUrl'])
             establishment['_id'] = None
-            changed_fields.append('None')
-
-        if any(key in changed_fields for key in ('address', 'city', 'None')):
-            establishment = scraper.get_establishment_geo(establishment)
+            changed_fields = ['None']
 
         if changed_fields:
+            if any(key in changed_fields for key in ('address', 'city', 'None')):
+                establishment = scraper.get_establishment_geo(establishment)
+
             va_establishments.update({'_id': establishment['_id']},
                                      establishment,
                                      True)
