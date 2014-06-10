@@ -13,7 +13,7 @@ cities = scraper.get_cities()
 
 for city in cities:
 
-    print city['name']
+    print '\t' + city['name']
     
     establishments = scraper.get_establishments(city)
     added = updated = 0
@@ -47,10 +47,10 @@ for city in cities:
                                      True)
 
             if 'None' in changed_fields:
-                print establishment['name'] + ' Added!'
+                print '\t' + establishment['name'] + ' Added!'
                 added += 1
             else:
-                print establishment['name'] + ' Updated!'
+                print '\t' + establishment['name'] + ' Updated!'
                 updated += 1
 
     print str(added) + ' new vendors added'

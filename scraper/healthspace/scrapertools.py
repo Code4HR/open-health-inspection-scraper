@@ -46,7 +46,6 @@ def get_lat_lng(address, city, state):
         url += '&auth-token=' + c['ss_token']
         url += '&street=' + urllib2.quote(str(address))
 
-        print url
         result = json.load(urllib2.urlopen(url))
 
         if len(result) == 1:
