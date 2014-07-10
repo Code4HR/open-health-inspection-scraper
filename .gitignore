@@ -4,3 +4,6 @@
 scraper/config.json
 
 *.pyc
+
+*~
+**/*~
