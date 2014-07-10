@@ -58,7 +58,9 @@ def get_establishments(city):
                     'url': details[0].a['href'],
                     'address': scrapertools.get_text(details[2]),
                     'locality': city['locality'],
-                    'last_inspection_date': date
+                    'last_inspection_date': date,
+                    'baseUrl': city['baseUrl'],
+                    'inserted': datetime.now()
                 })
 
 
