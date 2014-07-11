@@ -7,7 +7,8 @@ Tool to get VA restaurant health inspection data from website to database. Addre
 To run:
 
 1. cd to the `scraper` directory
-2. Add `config.json` file with the following content:
+2. Run `pip install -r requirements.txt` to install the necessary dependencies.
+3. Add `config.json` file with the following content:
 
     ```
     {"db_uri": "[URI TO MONGODB]",  
@@ -18,13 +19,13 @@ To run:
 	 "state_abb": "[State abbreviation, this becomes the collection name in Mongo]"}
     ```
 
-3. Run the python 2.x script
+4. Run the python 2.x script
 
 	```
 	python scrapeHealthData.py
 	```
 
-4. After your first run through you will need to create a 2dsphere index on the geo field in MongoDB.
+5. After your first run through you will need to create a 2dsphere index on the geo field in MongoDB.
 
     ```
 	db.[state_abb].ensureIndex({'geo': '2dsphere'})
