@@ -34,29 +34,30 @@ establishments = to_fetch.find()
 added = updated = 0
 
 for establishment in establishments:
-
     existing = va_establishments.find_one({'url': establishment['url']})
-
     if existing is not None:
         if 'last_inspected_date' not in existing or \
                 existing['last_inspected_date'] < establishment['last_inspected_date']:
             changed_fields = []
             establishment = scraper.get_establishment_details(establishment)
             establishment['inspections'] = scraper.get_inspections(establishment, establishment['baseUrl'])
-            # establishment['_id'] = existing['_id']
+            del establishment['baseUrl']  # Need to remove 'baseUrl' and 'inserted' before comparing or inserting
+            del establishment['inserted']
+            establishment['_id'] = existing['_id']  # Must set establishment id to existing or it won't update
+                                                    # correctly
             changed_fields = list(o for o in establishment if existing[o] != establishment[o])
         else:
             continue
     else:
         establishment = scraper.get_establishment_details(establishment)
         establishment['inspections'] = scraper.get_inspections(establishment, establishment['baseUrl'])
-        # establishment['_id'] = None
+        establishment['_id'] = None  # This is necessary to get a new ID from mongoDB when inserting
         changed_fields = ['None']
 
     if changed_fields:
         if any(key in changed_fields for key in ('address', 'city', 'None')):
-            pass
-            # establishment = scraper.get_establishment_geo(establishment)
+            #pass
+            establishment = scraper.get_establishment_geo(establishment)  # This is required to update coordinates
 
         va_establishments.update({'_id': establishment['_id']},
                                  establishment,
