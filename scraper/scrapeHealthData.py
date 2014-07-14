@@ -34,6 +34,7 @@ establishments = to_fetch.find()
 added = updated = 0
 
 for establishment in establishments:
+    fetch_id = establishment['_id']
     existing = va_establishments.find_one({'url': establishment['url']})
     if existing is not None:
         if 'last_inspected_date' not in existing or \
@@ -70,7 +71,7 @@ for establishment in establishments:
             print '\t' + establishment['name'] + ' Updated!'
             updated += 1
 
-    to_fetch.remove({'_id': establishment['_id']})
+    to_fetch.remove({'_id': fetch_id})
 
 
 print str(added) + ' new vendors added'
