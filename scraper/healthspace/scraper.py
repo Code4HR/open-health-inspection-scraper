@@ -53,8 +53,11 @@ def get_establishments(city):
             if len(details) == 4 and details[0] is not None and details[0].a is not None:
                 date = (None if scrapertools.get_text(details[3]) is None
                         else datetime.strptime(scrapertools.get_text(details[3]), '%d-%b-%Y'))
+                # Removes establishment IDs and newlines from the establishment name
+                name = re.sub('(#|\()(\s)*([0-9][0-9]-[0-9][0-9][0-9][0-9])(\))?', '', scrapertools.get_text(details[0]))
+                name = re.sub('(\n)+', ' ', name)
                 establishments_found.append({
-                    'name': scrapertools.get_text(details[0]),
+                    'name': name.strip(),
                     'url': details[0].a['href'],
                     'address': scrapertools.get_text(details[2]),
                     'locality': city['locality'],
@@ -68,6 +71,7 @@ def get_establishments(city):
 
 
 def get_establishment_details(establishment):
+
     establishment_details = scrapertools.get_content(BASE_URL + establishment['url'])
     establishment['city'] = re.sub('(<(/)?br>)|(\r)|(\n)',
                                    '',
