@@ -1,7 +1,8 @@
-import scrapertools
-import re
 import config
 from datetime import datetime
+import re
+import scrapertools
+from slugify import slugify
 
 c = config.load()
 
@@ -56,17 +57,18 @@ def get_establishments(city):
                 # Removes establishment IDs and newlines from the establishment name
                 name = re.sub('(#|\()(\s)*([0-9][0-9]-[0-9][0-9][0-9][0-9])(\))?', '', scrapertools.get_text(details[0]))
                 name = re.sub('(\n)+', ' ', name)
+                address = scrapertools.get_text(details[2])
+                slug_id = slugify(name.strip() + ' ' + address)
                 establishments_found.append({
+                    'slug': slug_id,
                     'name': name.strip(),
                     'url': details[0].a['href'],
-                    'address': scrapertools.get_text(details[2]),
+                    'address': address,
                     'locality': city['locality'],
                     'last_inspection_date': date,
                     'baseUrl': city['baseUrl'],
                     'inserted': datetime.now()
                 })
-
-
     return establishments_found
 
 

@@ -36,7 +36,7 @@ def get_lat_lng(address, city, state):
     c = config.load()
 
     # If address is a PO Box, skip
-    if re.search('P(\.)?O(\.)?(\sBox\s)[0-9]+', address) is not None:
+    if re.search('P(\.)?O(\.)?(\sBox\s)[0-9]+', address) is not None or address == '':
         return None
     else:
         url = 'https://api.smartystreets.com/street-address?'

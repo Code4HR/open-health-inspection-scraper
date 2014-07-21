@@ -2,17 +2,15 @@ import mongolab
 import config
 from healthspace import scraper
 
+
 c = config.load()
 
 print 'Connect to DB'
 db = mongolab.connect()
-va_establishments = db[c['state_abb']]
+dest_collection = db[c['state_abb']]
 
 # collection of establishments to fetch
 to_fetch = db['establishments_to_fetch']
-
-# print 'Drop it like... well, you know'
-# to_fetch.drop()
 
 if to_fetch.find_one() is None:
     print 'Make a list of Establishments to Fetch'
@@ -33,10 +31,12 @@ print 'Start Fetching Establishment Data'
 establishments = to_fetch.find()
 added = updated = 0
 
+
 for establishment in establishments:
     fetch_id = establishment['_id']
-    existing = va_establishments.find_one({'url': establishment['url']})
+    existing = dest_collection.find_one({'url': establishment['url']})
     if existing is not None:
+        print existing
         if 'last_inspected_date' not in existing or \
                 existing['last_inspected_date'] < establishment['last_inspected_date']:
             changed_fields = []
@@ -56,24 +56,21 @@ for establishment in establishments:
         changed_fields = ['None']
 
     if changed_fields:
-        if any(key in changed_fields for key in ('address', 'city', 'None')):
-            #pass
-            establishment = scraper.get_establishment_geo(establishment)  # This is required to update coordinates
+        establishment = scraper.get_establishment_geo(establishment)  # This is required to update coordinates
+        dest_collection.update({'_id': establishment['_id']},
+                           establishment,
+                           True)
 
-        va_establishments.update({'_id': establishment['_id']},
-                                 establishment,
-                                 True)
-
-        if 'None' in changed_fields:
-            print '\t' + establishment['name'] + ' Added!'
-            added += 1
-        else:
-            print '\t' + establishment['name'] + ' Updated!'
-            updated += 1
+    if 'None' in changed_fields:
+        print '\t' + establishment['name'] + ' Added!'
+        added += 1
+    else:
+        print '\t' + establishment['name'] + ' Updated!'
+        updated += 1
 
     to_fetch.remove({'_id': fetch_id})
 
 
-print str(added) + ' new vendors added'
-print str(updated) + ' existing vendors updated'
+print str(added) + ' new establishments added'
+print str(updated) + ' existing establishments updated'
 
