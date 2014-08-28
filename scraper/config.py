@@ -20,7 +20,7 @@ def uses_env_vars():
     return reduce(lambda i,j: i and j,
         map(lambda k: os.environ.get(k) != None, ENV_VARIABLES))
 
-def environ_config():
+def env_config():
     return {
         'db_uri': os.environ[ENV_DB_URI],
         'db_name': os.environ[ENV_DB_NAME],
@@ -32,7 +32,7 @@ def environ_config():
 
 def load():
     if uses_env_vars():
-        return environ_config()
+        return env_config()
     else:
         with open('config.json','r') as f:
             return json.loads(f.read())
