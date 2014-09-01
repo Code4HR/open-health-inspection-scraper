@@ -96,15 +96,14 @@ def get_establishments(city):
 
 
 def get_establishment_details(establishment):
-
     establishment_details = scrapertools.get_content(BASE_URL + establishment['url'])
-    establishment['city'] = re.sub('(<(/)?br>)|(\r)|(\n)',
-                                   '',
-                                   str(establishment_details.find(text=re.compile('Facility Location')).parent.next_sibling.find('br')))
-    establishment['type'] = establishment_details.find(text=re.compile("Facility Type")).parent.next_sibling.string
-
+    for linebreak in establishment_details.find_all('br'):
+        linebreak.extract()
+    
+    establishment['city'] = establishment_details.find(text=re.compile('^Facility Location')).parent.next_sibling.next_sibling
+    establishment['type'] = establishment_details.find(text=re.compile('^Facility Type')).parent.next_sibling.string
+    
     return establishment
-
 
 def get_inspections(establishment, city_url):
     inspections_found = []
