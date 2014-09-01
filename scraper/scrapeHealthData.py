@@ -32,10 +32,9 @@ if to_fetch.find_one() is None:
     cities = scraper.get_cities()
 
     for city in cities:
-        print 'Finding Establishments in ' + city['name']
-
+        print 'Finding Establishments in {0} ({1})'.format(city['name'], city['locality'])
         establishments = scraper.get_establishments(city)
-        print 'Found ' + str(len(establishments)) + ' in ' + city['name']
+        print 'Found {0} in {1} ({2})'.format(len(establishments), city['name'], city['locality'])
 
         for establishment in establishments:
             to_fetch.insert(establishment)
