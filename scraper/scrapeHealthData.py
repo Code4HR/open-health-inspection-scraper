@@ -65,7 +65,7 @@ for establishment in establishments:
     else:
         establishment = scraper.get_establishment_details(establishment)
         establishment['inspections'] = scraper.get_inspections(establishment, establishment['baseUrl'])
-        establishment['_id'] = None  # This is necessary to get a new ID from mongoDB when inserting
+        establishment['_id'] = mongolab.new_id()
         changed_fields = ['None']
 
     if changed_fields:

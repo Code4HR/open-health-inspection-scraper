@@ -14,8 +14,12 @@
 
 import config
 from pymongo import MongoClient
+from bson.objectid import ObjectId
 
 def connect():
     c = config.load()
     client = MongoClient(c["db_uri"])
     return client[c["db_name"]]
+
+def new_id():
+    return ObjectId()
