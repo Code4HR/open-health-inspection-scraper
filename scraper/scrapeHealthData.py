@@ -42,11 +42,11 @@ if to_fetch.find_one() is None:
 
 print 'Start Fetching Establishment Data'
 count_to_fetch = to_fetch.count()
-establishments = to_fetch.find()
+establishment = to_fetch.find_one()
 added = updated = 0
 
 
-for establishment in establishments:
+while establishment is not None:
     fetch_id = establishment['_id']
     existing = dest_collection.find_one({'url': establishment['url']})
     if existing is not None:
@@ -84,6 +84,7 @@ for establishment in establishments:
         updated += 1
 
     to_fetch.remove({'_id': fetch_id})
+    establishment = to_fetch.find_one()
 
 
 print str(added) + ' new establishments added'
