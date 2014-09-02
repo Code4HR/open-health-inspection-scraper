@@ -33,7 +33,7 @@ def get_content(url):
             html = scraperwiki.scrape(url)
             success = True
         except urllib2.URLError, e:
-            print 'Failed to get content: ' + e.reason
+            print 'Failed to get content: ' + str(e.reason)
     html = str.replace(html, '</=', '&le;')
     html = str.replace(html, '>/=', '&ge;')
     return BeautifulSoup(html)
@@ -67,8 +67,11 @@ def get_lat_lng(address, city, state):
         if len(result) == 1:
             lat_lng = {'lat': result[0]['metadata']['latitude'], 'lng': result[0]['metadata']['longitude']}
             return lat_lng
-        else:
+        elif len(result) == 0:
             print '\t\tGeo Fail'
             # return generic lat/lng if zero results so we can come back later to fix it
             lat_lng = {'lat': 36.0, 'lng': -76.0}
             return lat_lng
+        else:
+            print 'Geo Fail: ' + str(result)
+            exit(-1)
