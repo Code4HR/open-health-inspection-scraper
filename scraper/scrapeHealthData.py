@@ -41,6 +41,7 @@ if to_fetch.find_one() is None:
 
 
 print 'Start Fetching Establishment Data'
+count_to_fetch = to_fetch.count()
 establishments = to_fetch.find()
 added = updated = 0
 
@@ -73,12 +74,13 @@ for establishment in establishments:
         dest_collection.update({'_id': establishment['_id']},
                            establishment,
                            True)
-
+    
+    percentage_done = str(100 - int(float(to_fetch.count()) / float(count_to_fetch) * 100))
     if 'None' in changed_fields:
-        print '\t' + establishment['name'] + ' Added!'
+        print '\t' + establishment['name'] + ' Added! (' + percentage_done + '%)'
         added += 1
     else:
-        print '\t' + establishment['name'] + ' Updated!'
+        print '\t' + establishment['name'] + ' Updated! (' + percentage_done + '%)'
         updated += 1
 
     to_fetch.remove({'_id': fetch_id})
