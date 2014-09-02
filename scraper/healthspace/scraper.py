@@ -100,7 +100,7 @@ def get_establishment_details(establishment):
     for linebreak in establishment_details.find_all('br'):
         linebreak.extract()
     
-    establishment['city'] = establishment_details.find(text=re.compile('^Facility Location')).parent.next_sibling.next_sibling
+    establishment['city'] = establishment_details.find(text=re.compile('^Facility Location')).parent.next_sibling.next_sibling.string
     establishment['type'] = establishment_details.find(text=re.compile('^Facility Type')).parent.next_sibling.string
     
     return establishment
