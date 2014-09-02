@@ -152,7 +152,7 @@ def get_violations(inspection_details_url):
             'repeat': any(['Repeat' in tag.string for tag in details[1].contents if tag.name == 'b']),
             'critical': any(['Critical' in tag.string for tag in details[1].contents if tag.name == 'b']),
             'corrected': any(['Corrected' in tag.string for tag in details[1].contents if tag.name == 'b']),
-            'correction': ' '.join([tag.string for tag in details[1].contents if tag.name == 'font']).strip(),
+            'correction': ' '.join([tag.string for tag in details[1].contents if tag.name == 'font' and tag.string is not None]).strip(),
             'observation': ' '.join([tag.string for tag in details[1].contents if tag.name == None]).strip()
         })
     return violations_found
