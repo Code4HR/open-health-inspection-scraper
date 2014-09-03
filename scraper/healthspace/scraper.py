@@ -104,13 +104,11 @@ def get_establishment_details(establishment):
         establishment['city'] = establishment_details.find(text=re.compile('^Facility Location')).parent.next_sibling.next_sibling.string
     except:
         establishment['city'] = 'Unknown'
-        print 'Failed to get city for {0} at {1} in {2}'.format(establishment['name'], establishment['address'], establishment['locality'])
     
     try:
         establishment['type'] = establishment_details.find(text=re.compile('^Facility Type')).parent.next_sibling.string
     except:
         establishment['type'] = 'Unknown'
-        print 'Failed to get type for {0} at {1} in {2}'.format(establishment['name'], establishment['address'], establishment['locality'])
     
     return establishment
 
