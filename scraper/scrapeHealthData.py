@@ -12,6 +12,7 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
+import sys
 import mongolab
 import config
 from healthspace import scraper
@@ -50,9 +51,10 @@ while establishment is not None:
     fetch_id = establishment['_id']
     existing = dest_collection.find_one({'url': establishment['url']})
     if existing is not None:
-        print existing
-        if 'last_inspected_date' not in existing or \
-                existing['last_inspected_date'] < establishment['last_inspected_date']:
+        if 'last_inspection_date' not in existing or \
+                existing['last_inspection_date'] is None or \
+                establishment['last_inspection_date'] is None or \
+                existing['last_inspection_date'] < establishment['last_inspection_date']:
             changed_fields = []
             establishment = scraper.get_establishment_details(establishment)
             establishment['inspections'] = scraper.get_inspections(establishment, establishment['baseUrl'])
@@ -62,6 +64,10 @@ while establishment is not None:
                                                     # correctly
             changed_fields = list(o for o in establishment if existing[o] != establishment[o])
         else:
+            sys.stdout.write(str(to_fetch.count()) + '\r')
+            sys.stdout.flush()
+            to_fetch.remove({'_id': fetch_id})
+            establishment = to_fetch.find_one()
             continue
     else:
         establishment = scraper.get_establishment_details(establishment)
