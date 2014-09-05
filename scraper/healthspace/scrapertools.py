@@ -68,10 +68,8 @@ def get_lat_lng(address, city, state):
             lat_lng = {'lat': result[0]['metadata']['latitude'], 'lng': result[0]['metadata']['longitude']}
             return lat_lng
         elif len(result) == 0:
-            print '\t\tGeo Fail'
-            # return generic lat/lng if zero results so we can come back later to fix it
-            lat_lng = {'lat': 36.0, 'lng': -76.0}
-            return lat_lng
+            print '\t\tGeo Fail!'
+            return None
         else:
             print 'Geo Fail: ' + str(result)
             exit(-1)
