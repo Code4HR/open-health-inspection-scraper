@@ -22,32 +22,41 @@ c = config.load()
 
 BASE_URL = 'http://www.healthspace.com/'
 LOCALITY_LIST_URL = 'Clients/VDH/vdh_website.nsf/Main-HealthRegions?OpenView&Count=10000'
+LOCALITY_MAIN_URL = '/Main-News-Recent'
 CITY_LIST_URL = '/Food-CityList'
 
 def get_cities():
-    cities_found = []
-    city_names = []
+    localities = []
+    cities = []
     
     locality_list = scrapertools.get_content(BASE_URL + LOCALITY_LIST_URL)
-    localities = locality_list.body.div.img.find_all_next('a')
+    locality_a_tags = locality_list.body.div.img.find_all_next('a')
+    locality_urls = list(set(locality['href'][1:] for locality in locality_a_tags))
+    
+    for locality_url in locality_urls:
+        locality_main = scrapertools.get_content(BASE_URL + locality_url + LOCALITY_MAIN_URL)
+        locality_name = locality_main.find('h3').string
+        localities.append({
+            'name': locality_name,
+            'url': locality_url
+        })
+        print 'Locality: ' + locality_name
 
     for locality in localities:
-        city_list = scrapertools.get_content(BASE_URL + locality['href'] + CITY_LIST_URL)
-        cities = city_list.find_all('a')
+        city_list = scrapertools.get_content(BASE_URL + locality['url'] + CITY_LIST_URL)
+        city_a_tags = city_list.find_all('a')
         
-        for city in cities:
+        for city in city_a_tags:
             name = str(city.string).strip()
-            if name not in city_names:
-                print 'Loading ' + name
-                city_names.append(name)
-                cities_found.append({
-                    'name': name,
-                    'locality': str(locality.string).strip(),
-                    'baseUrl': city['href'][:city['href'].find('Food-List-ByName')],
-                    'establishmentUrl': city['href'].replace('Count=30', '')
-                })
-
-    return cities_found
+            print 'Loading {0} ({1})'.format(name, locality['name'])
+            cities.append({
+                'name': name,
+                'locality': locality['name'],
+                'baseUrl': city['href'][:city['href'].find('Food-List-ByName')],
+                'establishmentUrl': city['href'].replace('Count=30', '')
+            })
+    
+    return cities
 
 def get_establishments(city):
     establishments_found = []
@@ -87,15 +96,21 @@ def get_establishments(city):
 
 
 def get_establishment_details(establishment):
-
     establishment_details = scrapertools.get_content(BASE_URL + establishment['url'])
-    establishment['city'] = re.sub('(<(/)?br>)|(\r)|(\n)',
-                                   '',
-                                   str(establishment_details.find(text=re.compile('Facility Location')).parent.next_sibling.find('br')))
-    establishment['type'] = establishment_details.find(text=re.compile("Facility Type")).parent.next_sibling.string
-
+    for linebreak in establishment_details.find_all('br'):
+        linebreak.extract()
+    
+    try:
+        establishment['city'] = establishment_details.find(text=re.compile('^Facility Location')).parent.next_sibling.next_sibling.string
+    except:
+        establishment['city'] = 'Unknown'
+    
+    try:
+        establishment['type'] = establishment_details.find(text=re.compile('^Facility Type')).parent.next_sibling.string
+    except:
+        establishment['type'] = 'Unknown'
+    
     return establishment
-
 
 def get_inspections(establishment, city_url):
     inspections_found = []
@@ -144,7 +159,7 @@ def get_violations(inspection_details_url):
             'repeat': any(['Repeat' in tag.string for tag in details[1].contents if tag.name == 'b']),
             'critical': any(['Critical' in tag.string for tag in details[1].contents if tag.name == 'b']),
             'corrected': any(['Corrected' in tag.string for tag in details[1].contents if tag.name == 'b']),
-            'correction': ' '.join([tag.string for tag in details[1].contents if tag.name == 'font']).strip(),
+            'correction': ' '.join([tag.string for tag in details[1].contents if tag.name == 'font' and tag.string is not None]).strip(),
             'observation': ' '.join([tag.string for tag in details[1].contents if tag.name == None]).strip()
         })
     return violations_found

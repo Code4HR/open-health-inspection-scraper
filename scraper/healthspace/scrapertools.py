@@ -27,11 +27,13 @@ def clean(data):
 
 
 def get_content(url):
-    try:
-        html = scraperwiki.scrape(url)
-    except urllib2.URLError, e:
-        print e.reason
-        exit(1)
+    success = False
+    while not success:
+        try:
+            html = scraperwiki.scrape(url)
+            success = True
+        except urllib2.URLError, e:
+            print 'Failed to get content: ' + str(e.reason)
     html = str.replace(html, '</=', '&le;')
     html = str.replace(html, '>/=', '&ge;')
     return BeautifulSoup(html)
@@ -66,9 +68,8 @@ def get_lat_lng(address, city, state):
             lat_lng = {'lat': result[0]['metadata']['latitude'], 'lng': result[0]['metadata']['longitude']}
             return lat_lng
         elif len(result) == 0:
-            # return generic lat/lng if zero results so we can come back later to fix it
-            lat_lng = {'lat': 36.0, 'lng': -76.0}
-            return lat_lng
+            print '\t\tGeo Fail!'
+            return None
         else:
-            print result
+            print 'Geo Fail: ' + str(result)
             exit(-1)
