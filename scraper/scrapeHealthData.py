@@ -62,7 +62,7 @@ while establishment is not None:
             del establishment['inserted']
             establishment['_id'] = existing['_id']  # Must set establishment id to existing or it won't update
                                                     # correctly
-            changed_fields = list(o for o in establishment if existing[o] != establishment[o])
+            changed_fields = list(o for o in establishment if o not in existing or existing[o] != establishment[o])
         else:
             sys.stdout.write(str(to_fetch.count()) + '\r')
             sys.stdout.flush()
