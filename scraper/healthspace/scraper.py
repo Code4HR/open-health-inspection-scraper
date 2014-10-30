@@ -80,11 +80,13 @@ def get_establishments(city):
                 # Removes establishment IDs and newlines from the establishment name
                 name = re.sub('(#|\()(\s)*([0-9][0-9]-[0-9][0-9][0-9][0-9])(\))?', '', scrapertools.get_text(details[0]))
                 name = re.sub('(\n)+', ' ', name)
+                name = name.strip()
                 address = scrapertools.get_text(details[2])
-                slug_id = slugify(name.strip() + ' ' + address)
+                slug_id = slugify(name + ' ' + address)
                 establishments_found.append({
                     'slug': slug_id,
-                    'name': name.strip(),
+                    'name': name,
+                    'search_name': re.sub(r'[^\s\w]', '', name),
                     'url': details[0].a['href'],
                     'address': address,
                     'locality': city['locality'],
