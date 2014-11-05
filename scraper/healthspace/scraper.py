@@ -103,12 +103,12 @@ def get_establishment_details(establishment):
         linebreak.extract()
     
     try:
-        establishment['city'] = establishment_details.find(text=re.compile('^Facility Location')).parent.next_sibling.next_sibling.string
+        establishment['city'] = establishment_details.find(text=re.compile('^Facility Location')).parent.next_sibling.next_sibling.string.strip()
     except:
         establishment['city'] = 'Unknown'
     
     try:
-        establishment['type'] = establishment_details.find(text=re.compile('^Facility Type')).parent.next_sibling.string
+        establishment['type'] = establishment_details.find(text=re.compile('^Facility Type')).parent.next_sibling.string.strip()
     except:
         establishment['type'] = 'Unknown'
     
