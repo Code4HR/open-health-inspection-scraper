@@ -76,11 +76,15 @@ def get_establishments(city):
             details = establishment.find_all('td')
             if len(details) == 4 and details[0] is not None and details[0].a is not None:
                 date = (None if scrapertools.get_text(details[3]) is None
-                        else datetime.strptime(scrapertools.get_text(details[3]), '%d-%b-%Y'))
+                        else datetime.strptime(scrapertools.get_text(details[3]).strip('&nbsp;'), '%d-%b-%Y'))
                 # Removes establishment IDs and newlines from the establishment name
                 name = re.sub('(#|\()(\s)*([0-9][0-9]-[0-9][0-9][0-9][0-9])(\))?', '', scrapertools.get_text(details[0]))
-                name = re.sub('(\n)+', ' ', name)
-                name = name.strip()
+                name = re.sub('(\n)+', ' ', name).strip()
+                # Check for Non-Smoking image
+                if details[1].find('img'):
+                    smoking = False
+                else:
+                    smoking = True
                 address = scrapertools.get_text(details[2])
                 slug_id = slugify(name + ' ' + address)
                 establishments_found.append({
@@ -88,6 +92,7 @@ def get_establishments(city):
                     'name': name,
                     'search_name': re.sub(r'[^\s\w]', '', name),
                     'url': details[0].a['href'],
+                    'smoking': smoking,
                     'address': address,
                     'locality': city['locality'],
                     'last_inspection_date': date,
