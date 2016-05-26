@@ -1,34 +1,21 @@
-open-health-inspection-scraper
+Open Health Inspections Scraper
 ==============================
 
-Tool to get VA restaurant health inspection data from website to database. Addresses are geocoded using the <a href="http://smartystreets.com/">SmartyStreets</a> API. An older version uses the <a href="https://developers.google.com/maps/documentation/geocoding/">Google Geocoding API</a>. To use SmartyStreets you will need to obtain a key. The Google version does not require a key but is limited to 2,500 lookups per 24-hour period.
+This is a tool to get Virginia restaurant health inspection data from the <a href="http://healthspace.com/Clients/VDH/VDH/web.nsf/home.xsp">HealthSpace</a> website into a database. This is a complete rebuild of v1.0 of the scraper to account for changes in the HealthSpace website and to take advantage of new libraries.
+
+Technical
+=========
+The scraper is built for Python 3.4. It makes use of the <a href="http://scrapy.org/">Scrapy</a> library. Addresses will be geocoded using the <a href="http://smartystreets.com/">SmartyStreets</a> API. To use SmartyStreets you will need to obtain a key.
 
 
 To run:
 
-1. cd to the `scraper` directory
-2. Run `pip install -r requirements.txt` to install the necessary dependencies.
-3. Add `config.json` file with the following content:
+1. Run `pip install -r requirements.txt` to install the necessary dependencies.
 
-    ```
-    {"db_uri": "[URI TO MONGODB]",  
-	 "db_name":"[NAME OF DATABASE]",
-	 "ss_id": "[SmartyStreets ID]", 
-	 "ss_token":"[SmartyStreets Token]",
-	 "state": "[Full state name, i.e. Virginia, used for geocoding]",
-	 "state_abb": "[State abbreviation, this becomes the collection name in Mongo]"}
-    ```
-
-4. Run the python 2.x script
+2. Run the python 3.x script
 
 	```
-	python scrapeHealthData.py
-	```
-
-5. After your first run through you will need to create a 2dsphere index on the geo field in MongoDB.
-
-    ```
-	db.[state_abb].ensureIndex({'geo': '2dsphere'})
+	scrapeHealthData.py
 	```
 
 license
