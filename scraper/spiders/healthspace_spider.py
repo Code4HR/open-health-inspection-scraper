@@ -1,11 +1,12 @@
-import scrapy
+iimport scrapy
 from scraper.helpers import javascript as js
+from scraper.items import HealthDistrictItem
 
 class HealthSpaceSpider(scrapy.Spider):
     name = "healthspace"
     allowed_domains = ["healthspace.com"]
     start_urls = [
-        "http://healthspace.com/Clients/VDH/VDH/web.nsf"
+        "http://healthspace.com/Clients/VDH/VDH/web.nsf/module_healthRegions.xsp"
     ]
 
     def parse(self, response):
@@ -21,15 +22,25 @@ class HealthSpaceSpider(scrapy.Spider):
         Extract URL from JS Function
         Pass URL list
         '''
-
+        
+        for district in response.xpath('//tr/td'):
+            health_district_item = HealthDistrictItem()
+            health_district_item['district_name'] = district.xpath('a/text()').extract()
+            health_district_item['district_link'] = district.xpath('a/@href').extract()
+            health_district_item['district_id'] = district.xpath('a/@id').extract()
+            yield health_district_item
+        
+    
         # Get HTML links
-        urls = response.xpath('//a/@href').extract()
+        urls = response.xpath('//tr/td/a/@href').extract()
 
         # Get Javascript links
         js_urls = js.get_urls(response)
         if js_urls is not None:
             urls.extend(js_urls)
 
+
         # Iterate over URLs and send them back to parse
-        for url in urls:
-            yield scrapy.Request(response.urljoin(url), callback=self.parse)
+        #for url in urls:
+            #yield scrapy.Request(response.urljoin(url), callback=self.parse) 
+     
