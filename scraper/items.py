@@ -1,9 +1,15 @@
-import scrapy
+from scrapy.item import Item, Field
 
-class HealthDistrictItem(scrapy.item):
+class HealthDistrictItem(Item):
+	district_name = Field()
+	district_link = Field()
+	district_id = Field()
 
-class VendorItem(scrapy.item):
+class VendorItem(Item):
+	pass
 
-class InspectionItem(scrapy.item):
+class InspectionItem(Item):
+	pass
 
-class ViolationItem(scrapy.item):
+class ViolationItem(Item):
+	pass
