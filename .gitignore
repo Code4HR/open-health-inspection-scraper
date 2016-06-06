@@ -1,7 +1,5 @@
 
-*.sqlite
-
-scraper/config.json
+*.json
 
 *.pyc
 
