@@ -5,4 +5,4 @@ NEWSPIDER_MODULE = 'tutorial.spiders'
 FEED_FORMAT = 'json'
 FEED_URI = 'result.json'
 
-DEPTH_LIMIT = 1
+DEPTH_LIMIT = 0
