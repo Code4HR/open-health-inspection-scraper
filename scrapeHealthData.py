@@ -3,6 +3,12 @@
 from scrapy.crawler import CrawlerProcess
 from scrapy.utils.project import get_project_settings
 from scraper.spiders.healthspace_spider import HealthSpaceSpider
+import os
+
+try:
+	os.remove('result.json')
+except Exception:
+	pass
 
 settings = get_project_settings()
 settings.set('FEED_FORMAT', 'json')
