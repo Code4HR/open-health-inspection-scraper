@@ -6,11 +6,12 @@ class HealthDistrictItem(Item):
 	district_name = Field()
 	district_link = Field()
 	district_id = Field()
-	splash_link = Field(
-		output_processor=TakeFirst())
+	vendor_info = Field(
+		output_processor=Identity())
 
 class VendorItem(Item):
-	pass
+	vendor_url = Field()
+	vendor_name = Field()
 
 class InspectionItem(Item):
 	pass
@@ -20,4 +21,8 @@ class ViolationItem(Item):
 
 class DistrictItemLoader(ItemLoader):
 	default_item_class = HealthDistrictItem
+	default_output_processor = Identity()
+
+class VendorItemLoader(ItemLoader):
+	default_item_class = VendorItem
 	default_output_processor = Identity()
