@@ -1,6 +1,8 @@
 import scrapy
+from scrapy import Selector, Request
 from scraper.helpers import javascript as js
-from scraper.items import HealthDistrictItem, DistrictItemLoader
+from scraper.items import HealthDistrictItem, DistrictItemLoader, VendorItem, VendorItemLoader
+
 
 class HealthSpaceSpider(scrapy.Spider):
     name = "healthspace"
@@ -31,49 +33,71 @@ class HealthSpaceSpider(scrapy.Spider):
             district_loader.add_xpath('district_link', './a/@href')
             district_loader.add_xpath('district_id', './a/@id')
 
-            splash_url = district.xpath('./a/@href').extract()
+            district_splash_url = district_loader.get_output_value('district_link')
 
-            if splash_url:
-                request_dist =  scrapy.Request(splash_url[0], callback=self.district_splash_page,
-                                                        meta={'loader':district_loader})
-                yield request_dist
-            ### Uncomment to output when only extracting district items
-            #yield district_loader.load_item()
+            if district_splash_url:
+                yield Request(district_splash_url[0], callback=self.district_splash_page,
+                                                        meta={'district_loader': district_loader})
 
 
     def district_splash_page(self,response):
-        loader = response.meta['loader']
-        post_splash = response.urljoin('web.nsf/module_facilities.xsp?module=Food')
+        '''
+        Receives the main district_loader itemloader
+        and passes it to the correct vendor catalog for
+        the district.
+        '''
+        district_loader = response.meta['district_loader']
+        vendor_catalog_url = response.urljoin('web.nsf/module_facilities.xsp?module=Food')
 
-        yield scrapy.Request(post_splash, callback=self.vendor_parse,
-                                            meta={'loader':loader})
+        yield Request(vendor_catalog_url, callback=self.vendor_catalog_parse,
+                                            meta={'district_loader': district_loader})
 
+    def vendor_catalog_parse(self,response):
+        '''
+        Receives the district_loader and main vendor catalog page
+        Extracts all URLs from vendor page, sends each new URL
+        to the next step in the pipeline, eventually returning the
+        full loaded district_loader back to main parse.
+        '''
+        district_loader = response.meta['district_loader']
 
-    def vendor_parse(self,response):
-        loader = response.meta['loader']
         # Get HTML links
         urls = response.xpath('//tr/td/a/@href').extract()
-
         # Get Javascript links
         js_urls = js.get_urls(response)
         if js_urls is not None:
             urls.extend(js_urls)
 
+        #Initiate vendor pipeline for each URL
         for url in urls:
-            loader.add_value('splash_link', str(url))
-            yield loader.load_item()
+            district_loader.add_value('vendor_info', self.vendor_parser(response,url))
 
-####
-#### Can get past carousel page by appending "module_facilities.xsp?module=Food" to the end of
-#### "http://healthspace.com/Clients/VDH/$REGIONNAME/web.nsf/"
+        yield district_loader.load_item()
 
 
-'''
-# Get HTML links for district pages
-        urls = response.xpath('//tr/td/a/@href').extract()
+    '''
+    Having serious logic issues with this stuff below
+    '''
 
-        # Get Javascript links
-        js_urls = js.get_urls(response)
-        if js_urls is not None:
-            urls.extend(js_urls)
-'''
+    def vendor_parser(self,response,url):
+        '''
+        Will extract all vendor info and return
+        '''
+        vendor_loader = VendorItemLoader(selector=Selector(response))
+        vendor_url = response.urljoin(url)
+        vendor_request = Request(vendor_url, callback=self.vendor_parse_2,
+                                            meta={'vendor_loader': vendor_loader})
+        vendor_loader.add_value('vendor_url', vendor_loader.get_output_value('vendor_url'))
+        yield vendor_loader.load_item()
+
+
+    def vendor_parse_2(self, response):
+        '''
+        Possibly necessary to push a new request
+        to access the vendor page itself
+        '''
+        vendor_loader = response.meta['vendor_loader']
+        vendor_loader.add_value('vendor_url', 'test_url')
+        vendor_loader.add_value('vendor_name', 'test_name')
+
+        yield vendor_loader.load_item()
