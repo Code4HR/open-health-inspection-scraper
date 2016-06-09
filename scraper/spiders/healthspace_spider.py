@@ -25,10 +25,11 @@ class HealthSpaceSpider(scrapy.Spider):
         Pass URL list
         '''
 
-        ### The initial parse of district pages
+        ### Initial parse of district pages
         for district in response.xpath('//tr/td'):
-            ### Load district info into district item
+            
             district_loader = DistrictItemLoader(selector = district)
+
             district_loader.add_xpath('district_name', './a/text()')
             district_loader.add_xpath('district_link', './a/@href')
             district_loader.add_xpath('district_id', './a/@id')
@@ -36,6 +37,7 @@ class HealthSpaceSpider(scrapy.Spider):
             district_splash_url = district_loader.get_output_value('district_link')
 
             if district_splash_url:
+
                 yield Request(district_splash_url[0], callback=self.district_splash_page,
                                                         meta={'district_loader': district_loader})
 
@@ -46,11 +48,13 @@ class HealthSpaceSpider(scrapy.Spider):
         and passes it to the correct vendor catalog for
         the district.
         '''
+        
         district_loader = response.meta['district_loader']
         vendor_catalog_url = response.urljoin('web.nsf/module_facilities.xsp?module=Food')
 
         yield Request(vendor_catalog_url, callback=self.vendor_catalog_parse,
                                             meta={'district_loader': district_loader})
+
 
     def vendor_catalog_parse(self,response):
         '''
@@ -59,6 +63,7 @@ class HealthSpaceSpider(scrapy.Spider):
         to the next step in the pipeline, eventually returning the
         full loaded district_loader back to main parse.
         '''
+
         district_loader = response.meta['district_loader']
 
         # Get HTML links
@@ -70,34 +75,37 @@ class HealthSpaceSpider(scrapy.Spider):
 
         #Initiate vendor pipeline for each URL
         for url in urls:
-            district_loader.add_value('vendor_info', self.vendor_parser(response,url))
+            district_name_to_vendor = district_loader.get_output_value('district_name')
+            district_link_to_vendor = district_loader.get_output_value('district_link')
+
+            district_loader = DistrictItemLoader(selector = Selector(response))
+            district_loader.add_value('district_name', district_name_to_vendor)
+            district_loader.add_value('district_link', district_link_to_vendor)
+
+            vendor_url = response.urljoin(url)
+            yield Request(vendor_url, callback=self.vendor_parser,
+                                        meta={'district_loader':district_loader})
+
+
+    def vendor_parser(self,response):
+        '''
+        Will extract all vendor info and return
+        '''
+
+        district_loader = response.meta['district_loader']
+        district_loader.selector = Selector(response)
+
+        test_url = response.url
+
+        district_loader.add_value('vendor_url', test_url)
+        district_loader.add_xpath('vendor_name', '//tr/td/span[@id="view:_id1:_id175:nameCF1"]/text()')
+        district_loader.add_xpath('vendor_location', '//tr/td/span[@id="view:_id1:_id175:facilityAddressCF1"]/text()')
+        district_loader.add_xpath('vendor_id', '//tr/td/span[@id="view:_id1:_id175:documentIdCF1"]/text()')
+        district_loader.add_xpath('last_inspection', '//tr/td/span[@id="view:_id1:_id175:lastInspectionCF1"]/text()')
+        district_loader.add_xpath('vendor_type', '//tr/td/span[@id="view:_id1:_id175:subTypeCF1"]/text()')
+        district_loader.add_xpath('vendor_status', '//tr/td/span[@id="view:_id1:_id175:statusCF1"]/text()')
+        district_loader.add_xpath('vendor_phone', '//tr/td/span[@id="view:_id1:_id175:phoneCF1"]/text()')
 
         yield district_loader.load_item()
 
 
-    '''
-    Having serious logic issues with this stuff below
-    '''
-
-    def vendor_parser(self,response,url):
-        '''
-        Will extract all vendor info and return
-        '''
-        vendor_loader = VendorItemLoader(selector=Selector(response))
-        vendor_url = response.urljoin(url)
-        vendor_request = Request(vendor_url, callback=self.vendor_parse_2,
-                                            meta={'vendor_loader': vendor_loader})
-        vendor_loader.add_value('vendor_url', vendor_loader.get_output_value('vendor_url'))
-        yield vendor_loader.load_item()
-
-
-    def vendor_parse_2(self, response):
-        '''
-        Possibly necessary to push a new request
-        to access the vendor page itself
-        '''
-        vendor_loader = response.meta['vendor_loader']
-        vendor_loader.add_value('vendor_url', 'test_url')
-        vendor_loader.add_value('vendor_name', 'test_name')
-
-        yield vendor_loader.load_item()
