@@ -1,7 +1,7 @@
 import scrapy
 from scrapy import Selector, Request
 from scraper.helpers import javascript as js
-from scraper.items import HealthDistrictItem, DistrictItemLoader, VendorItem, VendorItemLoader
+from scraper.items import HealthDistrictItem, DistrictItemLoader
 
 
 class HealthSpaceSpider(scrapy.Spider):
