@@ -16,6 +16,16 @@ class HealthDistrictItem(Item):
 	vendor_status = Field()
 	vendor_phone = Field()
 
+	inspection_date = Field()
+	facility_type = Field()
+	year_round_status = Field()
+	risk_rating = Field()
+	inspection_type = Field()
+	followup_required = Field()
+
+	#To be deleted
+	inspection_url = Field()
+
 
 class DistrictItemLoader(ItemLoader):
 	default_item_class = HealthDistrictItem
