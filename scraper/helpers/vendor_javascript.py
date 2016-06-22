@@ -1,7 +1,7 @@
 import scrapy
 import re
 
-def get_urls(response):
+def get_urls(self,response):
     '''
     Returns absolute URLS from Javascript
     '''

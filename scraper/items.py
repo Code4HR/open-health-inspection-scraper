@@ -23,8 +23,6 @@ class HealthDistrictItem(Item):
 	inspection_type = Field()
 	followup_required = Field()
 
-	#To be deleted
-	inspection_url = Field()
 
 
 class DistrictItemLoader(ItemLoader):
