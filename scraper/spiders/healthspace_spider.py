@@ -1,6 +1,7 @@
 import scrapy
 from scrapy import Selector, Request
-from scraper.helpers import javascript as js
+from scraper.helpers import vendor_javascript
+from scraper.helpers import inspection_javascript
 from scraper.items import HealthDistrictItem, DistrictItemLoader
 
 
@@ -19,6 +20,17 @@ class HealthSpaceSpider(scrapy.Spider):
         2) Identify any anchor URLs and return them to the parse function
         3) Extract and identify any Javascript URLs in span tags and return
            them to the parse function
+        '''
+
+        '''
+        TODO
+        Connect to Mongo
+        Group inspections into dicts and add as single vals to the main vendor entry
+        Check if entry is present in DB and if not, update
+        '''
+
+        '''
+        mongodb doc https://realpython.com/blog/python/web-scraping-with-scrapy-and-mongodb/
         '''
 
         '''
@@ -71,7 +83,7 @@ class HealthSpaceSpider(scrapy.Spider):
         # Get HTML links
         urls = response.xpath('//tr/td/a/@href').extract()
         # Get Javascript links
-        js_urls = js.get_urls(response)
+        js_urls = vendor_javascript.get_urls(self,response)
         if js_urls is not None:
             urls.extend(js_urls)
 
@@ -103,35 +115,33 @@ class HealthSpaceSpider(scrapy.Spider):
         district_loader.selector = Selector(response)
 
         district_loader.add_value('vendor_url', response.url)
-        district_loader.add_xpath('vendor_name', '//tr/td/span[@id="view:_id1:_id175:nameCF1"]/text()')
-        district_loader.add_xpath('vendor_location', '//tr/td/span[@id="view:_id1:_id175:facilityAddressCF1"]/text()')
-        district_loader.add_xpath('vendor_id', '//tr/td/span[@id="view:_id1:_id175:documentIdCF1"]/text()')
-        district_loader.add_xpath('last_inspection', '//tr/td/span[@id="view:_id1:_id175:lastInspectionCF1"]/text()')
-        district_loader.add_xpath('vendor_type', '//tr/td/span[@id="view:_id1:_id175:subTypeCF1"]/text()')
-        district_loader.add_xpath('vendor_status', '//tr/td/span[@id="view:_id1:_id175:statusCF1"]/text()')
-        district_loader.add_xpath('vendor_phone', '//tr/td/span[@id="view:_id1:_id175:phoneCF1"]/text()')
-
-        ### Uncomment this to output all info up to vendor not including inspections
-        #yield district_loader.load_item()
-
-        #### Push to Inspection Pages.
+        district_loader.add_xpath('vendor_name', '//tr/td/span[contains(@id,"nameCF1")]/text()')
+        district_loader.add_xpath('vendor_location', '//tr/td/span[contains(@id,"facilityAddressCF1")]/text()')
+        district_loader.add_xpath('vendor_id', '//tr/td/span[contains(@id,"documentIdCF1")]/text()')
+        district_loader.add_xpath('last_inspection', '//tr/td/span[contains(@id,"lastInspectionCF1")]/text()')
+        district_loader.add_xpath('vendor_type', '//tr/td/span[contains(@id,"subTypeCF1")]/text()')
+        district_loader.add_xpath('vendor_status', '//tr/td/span[contains(@id,"statusCF1")]/text()')
+        district_loader.add_xpath('vendor_phone', '//tr/td/span[contains(@id,"phoneCF1")]/text()')
+        
+        '''
+        Push to Inspection Pages.
+        '''
 
         # Get HTML links
         urls = response.xpath('//tr/td/a/@href').extract()
         # Get Javascript links
-        js_urls = js.get_urls(response)
+        js_urls = inspection_javascript.get_inspection_urls(self,response)
         if js_urls is not None:
             urls.extend(js_urls)
 
-        district_loader.add_value('inspection_url', urls)
-        yield district_loader.load_item()
         #Initiate vendor pipeline for each URL
         for url in urls:
+
             inspection_url = response.urljoin(url)
 
             #This is insane
-            district_name_to_temp = district_loader.get_output_value('district_name')
-            district_link_to_temp = district_loader.get_output_value('district_link')
+            district_name_temp = district_loader.get_output_value('district_name')
+            district_link_temp = district_loader.get_output_value('district_link')
             district_id_temp = district_loader.get_output_value('district_id')
             vendor_url_temp = district_loader.get_output_value('vendor_url')
             vendor_name_temp = district_loader.get_output_value('vendor_name')
@@ -156,22 +166,20 @@ class HealthSpaceSpider(scrapy.Spider):
             district_loader.add_value('vendor_status', vendor_status_temp)
             district_loader.add_value('vendor_phone', vendor_phone_temp)
 
-            #Check to make sure we're hitting inspection pages
-            district_loader.add_value('inspection_url', inspection_url)
-
             yield Request(inspection_url, callback=self.inspection_parser, meta={'district_loader':district_loader})
 
 
     def inspection_parser(self, response):
+
         district_loader = response.meta['district_loader']
         district_loader.selector = Selector(response)
 
-        district_loader.add_xpath('inspection_date', '//*[@id="view:_id1:_id175:_id199:inspectionDateCF1"]/text()')
-        district_loader.add_xpath('facility_type', '//*[@id="view:_id1:_id175:_id199:facilityTypeCF1"]/text()')
-        district_loader.add_xpath('year_round_status', '//*[@id="view:_id1:_id175:_id199:allYearRoundCF1"]/text()')
-        district_loader.add_xpath('risk_rating', '//*[@id="view:_id1:_id175:_id199:riskRatingEB1"]/text()')
-        district_loader.add_xpath('inspection_type', '//*[@id="view:_id1:_id175:_id199:inspTypeCF1"]/text()')
-        district_loader.add_xpath('followup_required', '//*[@id="view:_id1:_id175:_id199:fuiReqCF1"]/text()')
+        district_loader.add_xpath('inspection_date', '//*[contains(@id,"inspectionDateCF1")]/text()')
+        district_loader.add_xpath('facility_type', '//*[contains(@id,"facilityTypeCF1")]/text()')
+        district_loader.add_xpath('year_round_status', '//*[contains(@id,"allYearRoundCF1")]/text()')
+        district_loader.add_xpath('risk_rating', '//*[contains(@id,"riskRatingEB1")]/text()')
+        district_loader.add_xpath('inspection_type', '//*[contains(@id,"inspTypeCF1")]/text()')
+        district_loader.add_xpath('followup_required', '//*[contains(@id,"fuiReqCF1")]/text()')
         
         yield district_loader.load_item()
 
