@@ -1,13 +1,24 @@
 from scrapy.item import Item, Field
-from scrapy.contrib.loader import ItemLoader
-from scrapy.contrib.loader.processor import Identity, MapCompose, TakeFirst
+from scrapy.loader import ItemLoader
+from scrapy.loader.processors import Identity, MapCompose, TakeFirst, Join
+
+'''
+TakeFirst stops the items from being formatted as single-valued arrays, which is hell in Mongo.
+However, if TakeFirst is used on the URLs (which are extracted in the spider to keep crawling)
+everything breaks. The most straightforward solution would be to use two separate fields for the
+same URL item and then insert the URL through TakeFirst in the final item load.
+'''
 
 class HealthDistrictItem(Item):
 	district_name = Field()
-	district_link = Field()
+	district_link = Field(
+		output_processor=Identity()
+		)
 	district_id = Field()
 
-	vendor_url = Field()
+	vendor_url = Field(
+		output_processor=Identity()
+		)
 	vendor_name = Field()
 	vendor_location = Field()
 	vendor_id = Field()
@@ -27,6 +38,6 @@ class HealthDistrictItem(Item):
 
 class DistrictItemLoader(ItemLoader):
 	default_item_class = HealthDistrictItem
-	default_output_processor = Identity()
+	default_output_processor = TakeFirst()
 
 
