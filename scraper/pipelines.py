@@ -37,12 +37,13 @@ class MongoPipeline(object):
 		if valid:
 
 			### This stuff is iffy
+			'''
 			if item['id'] in self.ids_seen:
 
 				raise DropItem("Duplicate item found: %s" % item)
 
 			else:
-
-				self.collection.insert(dict(item))
-				return item
+			'''
+			self.collection.insert(dict(item))
+			return item
 	
