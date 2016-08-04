@@ -44,10 +44,10 @@ class HealthSpaceSpider(scrapy.Spider):
             district_loader = DistrictItemLoader(selector = district)
 
             district_loader.add_xpath('district_name', './a/text()')
-            district_loader.add_xpath('district_link', './a/@href')
+            district_loader.add_xpath('district_url', './a/@href')
             district_loader.add_xpath('district_id', './a/@id')
 
-            district_splash_url = district_loader.get_output_value('district_link')
+            district_splash_url = district_loader.get_output_value('district_url')
 
             if district_splash_url:
 
@@ -92,13 +92,13 @@ class HealthSpaceSpider(scrapy.Spider):
 
             #Extract items from loader as is
             district_name_temp = district_loader.get_output_value('district_name')
-            district_link_temp = district_loader.get_output_value('district_link')
+            district_url_temp = district_loader.get_output_value('district_url')
             district_id_temp = district_loader.get_output_value('district_id')
 
             #OUT WITH THE OLD IN WITH THE NEW! This is so hideously inefficient
             district_loader = DistrictItemLoader(selector = Selector(response))
             district_loader.add_value('district_name', district_name_temp)
-            district_loader.add_value('district_link', district_link_temp)
+            district_loader.add_value('district_url', district_url_temp)
             district_loader.add_value('district_id', district_id_temp)
 
             vendor_url = response.urljoin(url)
@@ -141,7 +141,7 @@ class HealthSpaceSpider(scrapy.Spider):
 
             #This is insane
             district_name_temp = district_loader.get_output_value('district_name')
-            district_link_temp = district_loader.get_output_value('district_link')
+            district_url_temp = district_loader.get_output_value('district_url')
             district_id_temp = district_loader.get_output_value('district_id')
             vendor_url_temp = district_loader.get_output_value('vendor_url')
             vendor_name_temp = district_loader.get_output_value('vendor_name')
@@ -155,7 +155,7 @@ class HealthSpaceSpider(scrapy.Spider):
             #When I figure out the clean solution for this I'm gonna feel so stupid
             district_loader = DistrictItemLoader(selector = Selector(response))
             district_loader.add_value('district_name', district_name_temp)
-            district_loader.add_value('district_link', district_link_temp)
+            district_loader.add_value('district_url', district_url_temp)
             district_loader.add_value('district_id', district_id_temp)
             district_loader.add_value('vendor_url', vendor_url_temp)
             district_loader.add_value('vendor_name', vendor_name_temp)
@@ -182,19 +182,4 @@ class HealthSpaceSpider(scrapy.Spider):
         district_loader.add_xpath('followup_required', '//*[contains(@id,"fuiReqCF1")]/text()')
         
         yield district_loader.load_item()
-
-    
-
-
-
-
-
-
-        
-
-
-
-
-
-
 

@@ -1,13 +1,14 @@
 from scrapy.item import Item, Field
-from scrapy.contrib.loader import ItemLoader
-from scrapy.contrib.loader.processor import Identity, MapCompose, TakeFirst
+from scrapy.loader import ItemLoader
+from scrapy.loader.processors import Identity, MapCompose, TakeFirst, Join
+
 
 class HealthDistrictItem(Item):
 	district_name = Field()
 	district_link = Field()
 	district_id = Field()
 
-	vendor_url = Field()
+	vendor_link = Field()
 	vendor_name = Field()
 	vendor_location = Field()
 	vendor_id = Field()
@@ -23,10 +24,18 @@ class HealthDistrictItem(Item):
 	inspection_type = Field()
 	followup_required = Field()
 
-
+	### These are used to move through the pages but will be added to the final entry with _link suffix
+	### So they are not entered in dictionary form.
+	### The scraper breaks if we extract them with TakeFirst(), which also forces it into an array and is clumsy.
+	vendor_url = Field(
+		output_processor=Identity()
+		)
+	district_url = Field(
+		output_processor=Identity()
+		)
 
 class DistrictItemLoader(ItemLoader):
 	default_item_class = HealthDistrictItem
-	default_output_processor = Identity()
+	default_output_processor = TakeFirst()
 
 
