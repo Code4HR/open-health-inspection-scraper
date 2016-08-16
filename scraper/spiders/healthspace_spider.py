@@ -1,8 +1,11 @@
 import scrapy
+import logging
 from scrapy import Selector, Request
 from scraper.helpers import vendor_helpers, inspection_helpers
 from scraper.items import VendorItemLoader, InspectionItemLoader
 from urllib import parse
+
+logger = logging.getLogger(__name__)
 
 class HealthSpaceSpider(scrapy.Spider):
     name = "healthspace"
@@ -37,6 +40,8 @@ class HealthSpaceSpider(scrapy.Spider):
         '''
 
         locality_info = response.meta['locality_info']
+
+        logger.info('Started parsing ' + str(locality_info['name']))
 
         # Get HTML links
         urls = response.xpath('//tr/td/a/@href').extract()
@@ -105,7 +110,7 @@ class HealthSpaceSpider(scrapy.Spider):
         '''
         Extracts core inspection and violation data which is passed to the pipeline.
         '''
-        
+
         inspection_loader = InspectionItemLoader(response=response)
 
         inspection_loader.add_value('vendor_guid', response.meta['vendor_guid'])
