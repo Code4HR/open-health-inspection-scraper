@@ -1,10 +1,9 @@
 
 SPIDER_MODULES = ['scraper.spiders']
-NEWSPIDER_MODULE = 'tutorial.spiders'
 
-ITEM_PIPELINES = {'scraper.pipelines.MongoPipeline': 300}
+ITEM_PIPELINES = {'scraper.pipelines.MongoDBPipeline': 300}
 
 MONGODB_SERVER = "localhost"
 MONGODB_PORT = 27017
-MONGODB_DB = "ohi_test"
-MONGODB_COLLECTION = "health"
+MONGODB_DB = "healthdata"
+MONGODB_COLLECTION = "va"

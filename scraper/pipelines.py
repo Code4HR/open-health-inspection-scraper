@@ -1,19 +1,14 @@
 import pymongo
-
+import logging
 from scrapy.conf import settings
 from scrapy.exceptions import DropItem
+from scraper.items import VendorItem, InspectionItem
 
-import logging
 logger = logging.getLogger(__name__)
 
-
-class MongoPipeline(object):
+class MongoDBPipeline(object):
 
 	def __init__(self):
-
-		### ???Involved in duplicate handling???
-		self.ids_seen = set()
-
 		### Set up database connection (pulled from settings)
 		connection = pymongo.MongoClient(
 			settings['MONGODB_SERVER'],
@@ -25,25 +20,50 @@ class MongoPipeline(object):
 
 
 	def process_item(self, item, spider):
+		if isinstance(item, VendorItem):
+			vendor = dict(item)
 
-		valid = True
+			self.collection.update({
+				'guid': vendor['guid']
+			}, {'$set': vendor}, {'upsert': True})
 
-		for data in item:
+		if isinstance(item, InspectionItem):
+			inspection = dict(item)
 
-			if not data:
-				valid = False
-				raise DropItem("Missing {0}!".format(data))
+			vendor_guid = inspection.pop('vendor_guid')
 
-		if valid:
+			if self.collection.find({'guid': vendor_guid}).count() > 0:
+				existing = self.collection.find({
+					'guid': vendor_guid,
+					'inspections': {
+						'$elemMatch': {
+							'date': inspection['date']
+						}
+					}
+				}, {'inspections': {
+						'$elemMatch': {
+							'date': inspection['date']
+						}
+					}
+				})
 
-			### This stuff is iffy
-			'''
-			if item['id'] in self.ids_seen:
+				if existing:
+					self.collection.update({
+						'guid': vendor_guid,
+						'inspections': {
+							'$elemMatch': {
+								'date': inspection['date']
+							}
+						}
+					}, {'$set': {
+						'inspections.$': inspection
+						}
 
-				raise DropItem("Duplicate item found: %s" % item)
+					})
 
-			else:
-			'''
-			self.collection.insert(dict(item))
-			return item
-	
+				else:
+					self.collection.update({
+						'guide': vendor_guid
+					}, {
+						'$push': {inspections: inspection}
+					})
