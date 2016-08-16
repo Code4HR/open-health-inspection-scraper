@@ -29,6 +29,8 @@ class MongoDBPipeline(object):
 			}, {'$set': vendor}, upsert=True)
 
 			logger.info('Updated vendor ' + str(vendor['guid']))
+
+
 		if isinstance(item, InspectionItem):
 			inspection = dict(item)
 
@@ -49,8 +51,8 @@ class MongoDBPipeline(object):
 					}
 				})
 
-				if existing:
-					self.collection.update({
+				if existing.count() > 0:
+					result = self.collection.update({
 						'guid': vendor_guid,
 						'inspections': {
 							'$elemMatch': {
@@ -63,13 +65,22 @@ class MongoDBPipeline(object):
 
 					})
 
-					logger.info('Updated inspection from ' + inspection['date'].strftime("%m/%d/%Y") + ' for vendor ' + vendor_guid)
+					if result['n'] is not 1:
+						logger.warn('Could not update inspection from ' + inspection['date'].strftime("%m/%d/%Y") + ' for vendor ' + vendor_guid)
+					else:
+						logger.info('Updated inspection from ' + inspection['date'].strftime("%m/%d/%Y") + ' for vendor ' + vendor_guid)
+
 
 				else:
-					self.collection.update({
-						'guide': vendor_guid
+					result = self.collection.update({
+						'guid': vendor_guid
 					}, {
-						'$push': {inspections: inspection}
+						'$push': {'inspections': inspection}
 					})
 
-					logger.info('Added new inspection from ' + inspection['date'].strftime("%m/%d/%Y") + ' for vendor ' + vendor_guid)
+					if result['n'] is not 1:
+						logger.warn('Could not add inspection from ' + inspection['date'].strftime("%m/%d/%Y") + ' for vendor ' + vendor_guid)
+					else:
+						logger.info('Added new inspection from ' + inspection['date'].strftime("%m/%d/%Y") + ' for vendor ' + vendor_guid)
+			else:
+				logger.warn('Attempted to add/update inspection but could not find vendor ' + vendor_guid)

@@ -1,5 +1,6 @@
 import scrapy
 import re
+from slugify import slugify
 
 def get_urls(self,response):
     '''
@@ -32,6 +33,9 @@ def vendor_address(location):
 def vendor_city(location):
     return location.split(',')[1].split('VA')[0].rstrip()
 
+def vendor_search_name(name):
+    return slugify(name, separator = ' ')
+    
 def vendor_guid(url):
 	if url:
 		matches = re.match('(http://healthspace.com/Clients/VDH/)(.*)(/web.nsf/formFacility.xsp\?id=)(.*)',url, flags=re.I)

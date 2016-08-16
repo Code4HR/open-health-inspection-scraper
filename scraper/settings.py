@@ -2,6 +2,7 @@
 SPIDER_MODULES = ['scraper.spiders']
 
 LOG_LEVEL = 'INFO'
+DOWNLOAD_DELAY = 0.25
 
 ITEM_PIPELINES = {'scraper.pipelines.MongoDBPipeline': 300}
 

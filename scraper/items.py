@@ -1,7 +1,7 @@
 from scrapy.item import Item, Field
 from scrapy.loader import ItemLoader
 from scrapy.loader.processors import Identity, MapCompose, TakeFirst, Join
-from scraper.helpers.vendor_helpers import vendor_guid, vendor_category, vendor_address, vendor_city
+from scraper.helpers.vendor_helpers import *
 from slugify import slugify
 from datetime import datetime
 import re
@@ -30,7 +30,9 @@ class VendorItem(Item):
 	last_inspection_date = Field(
 		input_processor=MapCompose(format_date)
 	)
-	search_name = Field()
+	search_name = Field(
+		input_processor=MapCompose(vendor_search_name)
+	)
 	type = Field()
 	status = Field()
 	phone = Field()

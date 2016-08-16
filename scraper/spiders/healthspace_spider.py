@@ -75,6 +75,7 @@ class HealthSpaceSpider(scrapy.Spider):
         vendor_loader.add_xpath('vendor_id', '//tr/td/span[contains(@id,"documentIdCF1")]/text()')
         vendor_loader.add_value('guid', response.url)
         vendor_loader.add_xpath('name', '//tr/td/span[contains(@id,"nameCF1")]/text()')
+        vendor_loader.add_value('search_name', vendor_loader.get_output_value('name'))
         vendor_loader.add_value('url', response.url)
         vendor_loader.add_xpath('vendor_location', '//tr/td/span[contains(@id,"facilityAddressCF1")]/text()')
         vendor_loader.add_value('address', vendor_loader.get_output_value('vendor_location'))
