@@ -12,7 +12,14 @@ To run:
 
 1. Run `pip install -r requirements.txt` to install the necessary dependencies.
 
-2. Run the python 3.x script
+2. Set the following environment variables or use the defaults in `scraper/settings.py`:
+```
+MONGODB_SERVER
+MONGODB_PORT
+MONGODB_DB
+MONGODB_COLLECTION
+```
+3. Run the python 3.x script. The scraper can be stopped using `Ctrl/Cmd + C` (only once) and can then be restarted at the point where it stopped. It will save it's progress in the folder specified by the `JOBDIR` setting in `scraper/settings.py`
 
 	```
 	scrapeHealthData.py
