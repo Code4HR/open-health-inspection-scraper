@@ -13,7 +13,6 @@ class Scoring(object):
 
         self.score_logger = logging.getLogger(__name__)
         self.score_logger.setLevel(logging.INFO)
-        self.score_logger.addHandler(logging.StreamHandler(sys.stdout))
 
         ### Set up database connection (pulled from settings)
         connection = pymongo.MongoClient(

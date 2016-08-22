@@ -16,7 +16,7 @@ class HealthSpaceSpider(scrapy.Spider):
     ]
 
     def closed(self, reason):
-        if reason == 'finished' and 'JOBDIR' in settings:
+        if reason == 'finished' and 'JOBDIR' in self.settings:
                 shutil.rmtree(settings['JOBDIR'])
 
     def parse(self, response):
@@ -92,7 +92,15 @@ class HealthSpaceSpider(scrapy.Spider):
         vendor_loader.add_xpath('phone', '//tr/td/span[contains(@id,"phoneCF1")]/text()')
         vendor_loader.add_value('slug', vendor_loader.get_output_value('name') + ' ' + vendor_loader.get_output_value('vendor_location'))
 
-        #Load vendor info
+        address = {
+            'street': vendor_loader.get_output_value('address'),
+            'city': vendor_loader.get_output_value('city'),
+            'state': 'VA'
+        }
+
+        vendor_loader.add_value('geo', address)
+
+        # Load vendor info
         yield vendor_loader.load_item()
 
         # Grab inspection links and hand to parser.

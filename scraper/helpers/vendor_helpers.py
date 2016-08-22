@@ -1,6 +1,11 @@
 import scrapy
 import re
+import json
+from urllib import parse, request
 from slugify import slugify
+from scrapy.utils.project import get_project_settings
+
+settings = get_project_settings()
 
 def get_urls(self,response):
     '''
@@ -35,7 +40,7 @@ def vendor_city(location):
 
 def vendor_search_name(name):
     return slugify(name, separator = ' ')
-    
+
 def vendor_guid(url):
 	if url:
 		matches = re.match('(http://healthspace.com/Clients/VDH/)(.*)(/web.nsf/formFacility.xsp\?id=)(.*)',url, flags=re.I)
@@ -43,6 +48,31 @@ def vendor_guid(url):
 			return matches.group(4)
 
 	return None
+
+def get_lat_lng(address):
+
+    ss_id = settings['SS_ID']
+    ss_token = settings['SS_TOKEN']
+
+    if ss_id is not None and ss_token is not None:
+        # If address is a PO Box, skip
+        if re.search('P(\.)?O(\.)?(\sBox\s)[0-9]+', address['street']) is None and address['street'] != '':
+            url = 'https://api.smartystreets.com/street-address?'
+            url += 'state=' + parse.quote(str(address['state']))
+            url += '&city=' + parse.quote(str(address['city']))
+            url += '&auth-id=' + str(ss_id)
+            url += '&auth-token=' + str(ss_token)
+            url += '&street=' + parse.quote(str(address['street']))
+
+            response = request.urlopen(url)
+            data = json.loads(response.read().decode('utf-8'))
+
+            if len(data) == 1:
+                lat_lng = {'lat': data[0]['metadata']['latitude'], 'lng': data[0]['metadata']['longitude']}
+                return lat_lng
+
+    return None
+
 
 
 def vendor_category(type):

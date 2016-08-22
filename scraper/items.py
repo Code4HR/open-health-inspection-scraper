@@ -69,6 +69,11 @@ class VendorItem(Item):
 		input_processor=MapCompose(vendor_category),
 		output_processor=TakeFirst()
 	)
+	geo = Field(
+		input_processor=MapCompose(get_lat_lng),
+		output_processor=TakeFirst()
+	)
+
 	inspections = Field()
 
 class VendorItemLoader(ItemLoader):
