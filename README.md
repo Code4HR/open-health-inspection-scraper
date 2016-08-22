@@ -20,7 +20,8 @@ MONGODB_DB
 MONGODB_COLLECTION
 ```
 
-    If you want to use the SmartyStreets geocoding integration, also set the following environment variables:
+If you want to use the SmartyStreets geocoding integration, also set the following environment variables:
+
 ```
 SS_ID
 SS_TOKEN
