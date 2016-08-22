@@ -11,55 +11,91 @@ def format_date(date_string):
 
 
 class VendorItem(Item):
-	locality_id = Field()
-	locality = Field()
-	locality_url = Field()
-	vendor_id = Field()
-	guid = Field(
-		input_processor=MapCompose(vendor_guid)
+	locality_id = Field(
+		output_processor=TakeFirst()
 	)
-	name = Field()
-	url = Field()
+	locality = Field(
+		output_processor=TakeFirst()
+	)
+	locality_url = Field(
+		output_processor=TakeFirst()
+	)
+	vendor_id = Field(
+		output_processor=TakeFirst()
+	)
+	guid = Field(
+		input_processor=MapCompose(vendor_guid),
+		output_processor=TakeFirst()
+	)
+	name = Field(
+		output_processor=TakeFirst()
+	)
+	url = Field(
+		output_processor=TakeFirst()
+	)
 	address = Field(
-		input_processor=MapCompose(vendor_address)
+		input_processor=MapCompose(vendor_address),
+		output_processor=TakeFirst()
 	)
 	city = Field(
-		input_processor=MapCompose(vendor_city)
+		input_processor=MapCompose(vendor_city),
+		output_processor=TakeFirst()
 	)
-	vendor_location = Field()
+	vendor_location = Field(
+		output_processor=TakeFirst()
+	)
 	last_inspection_date = Field(
-		input_processor=MapCompose(format_date)
+		input_processor=MapCompose(format_date),
+		output_processor=TakeFirst()
 	)
 	search_name = Field(
-		input_processor=MapCompose(vendor_search_name)
+		input_processor=MapCompose(vendor_search_name),
+				output_processor=TakeFirst()
 	)
-	type = Field()
-	status = Field()
-	phone = Field()
+	type = Field(
+		output_processor=TakeFirst()
+	)
+	status = Field(
+		output_processor=TakeFirst()
+	)
+	phone = Field(
+		output_processor=TakeFirst()
+	)
 	slug = Field(
-		input_processor=MapCompose(slugify)
+		input_processor=MapCompose(slugify),
+		output_processor=TakeFirst()
 	)
 	category = Field(
-		input_processor=MapCompose(vendor_category)
+		input_processor=MapCompose(vendor_category),
+		output_processor=TakeFirst()
 	)
+	inspections = Field()
 
 class VendorItemLoader(ItemLoader):
 	default_item_class = VendorItem
-	default_output_processor = TakeFirst()
 
 class InspectionItem(Item):
-	vendor_guid = Field()
-	date = Field(
-		input_processor=MapCompose(format_date)
+	vendor_guid = Field(
+		output_processor=TakeFirst()
 	)
-	type = Field()
-	risk_rating = Field()
-	followup_required = Field()
+	date = Field(
+		input_processor=MapCompose(format_date),
+		output_processor=TakeFirst()
+	)
+	type = Field(
+		output_processor=TakeFirst()
+	)
+	risk_rating = Field(
+		output_processor=TakeFirst()
+	)
+	followup_required = Field(
+		output_processor=TakeFirst()
+	)
 	comments = Field(
-		input_processor=Join('')
+		input_processor=Join(''),
+		output_processor=TakeFirst()
 	)
 	violations = Field()
 
 class InspectionItemLoader(ItemLoader):
 	default_item_class = InspectionItem
-	default_output_processor = TakeFirst()

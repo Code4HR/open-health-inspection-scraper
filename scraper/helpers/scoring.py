@@ -1,5 +1,6 @@
 import pymongo
 import logging
+import sys
 from scrapy.settings import Settings
 
 
@@ -9,7 +10,10 @@ class Scoring(object):
             settings = Settings(settings)
         self.settings = settings
 
-        self.logger = logging.getLogger(__name__)
+
+        self.score_logger = logging.getLogger(__name__)
+        self.score_logger.setLevel(logging.INFO)
+        self.score_logger.addHandler(logging.StreamHandler(sys.stdout))
 
         ### Set up database connection (pulled from settings)
         connection = pymongo.MongoClient(
@@ -51,7 +55,6 @@ class Scoring(object):
                     # different criteria
                     if 'violations' in inspection:
                         for violation in inspection['violations']:
-                            print(violation)
                             score += self.scoring['base']
                             if violation['critical']:
                                 score += self.scoring['critical']
@@ -86,4 +89,4 @@ class Scoring(object):
                                          False,
                                          False)
 
-                self.logger.info('Record ' + vendor['guid'] + ' scored ' + str(vendor_score))
+                self.score_logger.info('Record ' + vendor['guid'] + ' scored ' + str(vendor_score))

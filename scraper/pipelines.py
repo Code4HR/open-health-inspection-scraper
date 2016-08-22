@@ -21,16 +21,26 @@ class MongoDBPipeline(object):
 
 
 	def process_item(self, item, spider):
+		# Vendor Data
 		if isinstance(item, VendorItem):
 			vendor = dict(item)
 
-			self.collection.update({
-				'guid': vendor['guid']
-			}, {'$set': vendor}, upsert=True)
+			if self.collection.find({'guid': item['guid']}).count() > 0:
+				# Remove empty inspections array for existing vendors
+				vendor.pop('inspections', None)
 
-			logger.info('Updated vendor ' + str(vendor['guid']))
+				self.collection.update({
+					'guid': vendor['guid']
+				}, {'$set': vendor})
 
+				logger.info('Updated vendor ' + str(vendor['guid']))
 
+			else:
+				self.collection.insert_one(vendor)
+
+				logger.info('Added new vendor ' + str(vendor['guid']))
+
+		# Inspection Data
 		if isinstance(item, InspectionItem):
 			inspection = dict(item)
 

@@ -1,5 +1,6 @@
 import scrapy
 import logging
+import shutil
 from scrapy import Selector, Request
 from scraper.helpers import vendor_helpers, inspection_helpers
 from scraper.items import VendorItemLoader, InspectionItemLoader
@@ -13,6 +14,10 @@ class HealthSpaceSpider(scrapy.Spider):
     start_urls = [
         "http://healthspace.com/Clients/VDH/VDH/web.nsf/module_healthRegions.xsp"
     ]
+
+    def closed(self, reason):
+        if reason == 'finished' and 'JOBDIR' in settings:
+                shutil.rmtree(settings['JOBDIR'])
 
     def parse(self, response):
         ### Initial parse of district pages
@@ -87,7 +92,10 @@ class HealthSpaceSpider(scrapy.Spider):
         vendor_loader.add_xpath('phone', '//tr/td/span[contains(@id,"phoneCF1")]/text()')
         vendor_loader.add_value('slug', vendor_loader.get_output_value('name') + ' ' + vendor_loader.get_output_value('vendor_location'))
 
-        # Push to Inspection Pages.
+        #Load vendor info
+        yield vendor_loader.load_item()
+
+        # Grab inspection links and hand to parser.
 
         # Get HTML links
         urls = response.xpath('//tr/td/a/@href').extract()
@@ -95,9 +103,6 @@ class HealthSpaceSpider(scrapy.Spider):
         js_urls = inspection_helpers.get_inspection_urls(self,response)
         if js_urls is not None:
             urls.extend(js_urls)
-
-        #Load vendor info
-        yield vendor_loader.load_item()
 
         # Parse vendor inspections
         for url in urls:
