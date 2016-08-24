@@ -17,7 +17,7 @@ class HealthSpaceSpider(scrapy.Spider):
 
     def closed(self, reason):
         if reason == 'finished' and 'JOBDIR' in self.settings:
-                shutil.rmtree(settings['JOBDIR'])
+                shutil.rmtree(self.settings['JOBDIR'])
 
     def parse(self, response):
         ### Initial parse of district pages
@@ -46,7 +46,33 @@ class HealthSpaceSpider(scrapy.Spider):
 
         locality_info = response.meta['locality_info']
 
-        logger.info('Started parsing ' + str(locality_info['name']))
+        logger.info('Parsing ' + str(locality_info['name']))
+
+        # Check if another page is available for this locality, if so send
+        # it back to the parser. Uses the 'Next' button on the locality
+        # page, which triggers a POST request to get more vendors.
+        if response.xpath('//a[contains(@id, "Next__lnk")]'):
+
+            ajax_id = 'view:_id1:_id228:panel1'
+
+            page_body = {
+            '$$viewid': response.xpath('//form/input[@name="$$viewid"]/@value').extract_first(),
+            '$$xspexecid': response.xpath('//*[contains(@id, "Next__lnk")]/parent::span/parent::div/@id').extract_first(),
+            '$$xspsubmitid': response.xpath('//*[contains(@id, "Next__lnk")]/parent::span/@id').extract_first(),
+            '$$xspsubmitscroll': '0|0',
+            '$$xspsubmitvalue': response.xpath('//form/input[@name="$$xspsubmitvalue"]/@value').extract_first(),
+
+            }
+
+            page_body[response.xpath('//form/@id').extract_first()] = response.xpath('//form/@id').extract_first()
+
+            page_url = response.url + '&$$ajaxid=' + parse.quote('view:_id1:_id228:panel1')
+
+            yield Request(response.url, callback=self.locality_catalog_parse,
+                            method='POST', body=parse.urlencode(page_body),
+                            meta={'locality_info':locality_info},
+                            dont_filter=True)
+
 
         # Get HTML links
         urls = response.xpath('//tr/td/a/@href').extract()

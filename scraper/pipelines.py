@@ -12,8 +12,8 @@ class MongoDBPipeline(object):
 	def __init__(self):
 		### Set up database connection (pulled from settings)
 		connection = pymongo.MongoClient(
-			settings['MONGODB_SERVER'],
-			settings['MONGODB_PORT']
+			host=settings['MONGODB_SERVER'],
+			port=int(settings['MONGODB_PORT'])
 		)
 
 		db = connection[settings['MONGODB_DB']]

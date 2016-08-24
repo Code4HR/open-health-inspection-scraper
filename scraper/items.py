@@ -50,7 +50,7 @@ class VendorItem(Item):
 	)
 	search_name = Field(
 		input_processor=MapCompose(vendor_search_name),
-				output_processor=TakeFirst()
+		output_processor=TakeFirst()
 	)
 	type = Field(
 		output_processor=TakeFirst()
