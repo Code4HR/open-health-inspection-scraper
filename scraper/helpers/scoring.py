@@ -1,20 +1,18 @@
 import pymongo
 import logging
 import sys
-from scrapy.settings import Settings
+from scrapy.utils.project import get_project_settings
 
 
 class Scoring(object):
-    def __init__(self,settings=None):
-        if isinstance(settings, dict) or settings is None:
-            settings = Settings(settings)
-        self.settings = settings
+    def __init__(self):
+        settings = get_project_settings()
 
 
         self.score_logger = logging.getLogger(__name__)
         self.score_logger.setLevel(logging.INFO)
 
-        ### Set up database connection (pulled from settings)
+        # Set up database connection (pulled from settings)
         connection = pymongo.MongoClient(
             host=settings['MONGODB_SERVER'],
 			port=int(settings['MONGODB_PORT'])

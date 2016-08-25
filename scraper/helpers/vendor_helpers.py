@@ -8,9 +8,7 @@ from scrapy.utils.project import get_project_settings
 settings = get_project_settings()
 
 def get_urls(self,response):
-    '''
-    Returns absolute URLS from Javascript
-    '''
+    # Returns absolute URLS from Javascript
 
     scripts = response.xpath('//script/text()').extract()
 
@@ -23,9 +21,7 @@ def get_urls(self,response):
 
 
 def get_function_urls(script):
-    '''
-    Extracts URLS from functions and returns as a list
-    '''
+    # Extracts URLS from functions and returns as a list
 
     url_list = re.findall('(?<=function\s)(.*)(?:\(thisEvent\)\s{\n)(?:location\s\=\s\")(.*)(?:\")', script)
 
@@ -50,7 +46,7 @@ def vendor_guid(url):
 	return None
 
 def get_lat_lng(address):
-
+    # Take a dict of address parts and call SmartyStreets to geocode it.
     ss_id = settings['SS_ID']
     ss_token = settings['SS_TOKEN']
 
@@ -76,6 +72,7 @@ def get_lat_lng(address):
 
 
 def vendor_category(type):
+    # Lookup the vendor type in a dict and return a broader category
 	categories = {'Seasonal Fast Food Restaurant': 'Restaurant',
               'Fast Food Restaurant': 'Restaurant',
               'Full Service Restaurant': 'Restaurant',

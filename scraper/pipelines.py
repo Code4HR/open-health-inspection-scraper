@@ -1,21 +1,18 @@
-import pymongo
 import logging
-from scrapy.conf import settings
+from pymongo import MongoClient
 from scrapy.exceptions import DropItem
 from scraper.items import VendorItem, InspectionItem
 from datetime import datetime
+from scrapy.utils.project import get_project_settings
 
 logger = logging.getLogger(__name__)
 
 class MongoDBPipeline(object):
 
 	def __init__(self):
-		### Set up database connection (pulled from settings)
-		connection = pymongo.MongoClient(
-			host=settings['MONGODB_SERVER'],
-			port=int(settings['MONGODB_PORT'])
-		)
-
+		settings = get_project_settings()
+		connection = MongoClient(host=settings['MONGODB_SERVER'],
+		                         port=int(settings['MONGODB_PORT']))
 		db = connection[settings['MONGODB_DB']]
 		self.collection = db[settings['MONGODB_COLLECTION']]
 
@@ -25,6 +22,7 @@ class MongoDBPipeline(object):
 		if isinstance(item, VendorItem):
 			vendor = dict(item)
 
+			# Check if vendor exists, if so just update
 			if self.collection.find({'guid': item['guid']}).count() > 0:
 				# Remove empty inspections array for existing vendors
 				vendor.pop('inspections', None)
@@ -33,20 +31,25 @@ class MongoDBPipeline(object):
 					'guid': vendor['guid']
 				}, {'$set': vendor})
 
-				logger.info('Updated vendor ' + str(vendor['guid']))
+				logger.debug('Updated vendor ' + str(vendor['guid']))
 
 			else:
+				# If the vendor is new insert
 				self.collection.insert_one(vendor)
 
-				logger.info('Added new vendor ' + str(vendor['guid']))
+				logger.debug('Added new vendor ' + str(vendor['guid']))
 
 		# Inspection Data
 		if isinstance(item, InspectionItem):
 			inspection = dict(item)
 
+			# Remove vendor_guid because we don't want it in the dict
+			# we just passed it to use for lookup
 			vendor_guid = inspection.pop('vendor_guid')
 
+			# Make sure the vendor exists, if not log a warning
 			if self.collection.find({'guid': vendor_guid}).count() > 0:
+				# Check if the inspection exists
 				existing = self.collection.find({
 					'guid': vendor_guid,
 					'inspections': {
@@ -61,6 +64,7 @@ class MongoDBPipeline(object):
 					}
 				})
 
+				# If it exists, update
 				if existing.count() > 0:
 					result = self.collection.update({
 						'guid': vendor_guid,
@@ -78,9 +82,9 @@ class MongoDBPipeline(object):
 					if result['n'] is not 1:
 						logger.warn('Could not update inspection from ' + inspection['date'].strftime("%m/%d/%Y") + ' for vendor ' + vendor_guid)
 					else:
-						logger.info('Updated inspection from ' + inspection['date'].strftime("%m/%d/%Y") + ' for vendor ' + vendor_guid)
+						logger.debug('Updated inspection from ' + inspection['date'].strftime("%m/%d/%Y") + ' for vendor ' + vendor_guid)
 
-
+				# If it is new, push the inspection into the inspections array
 				else:
 					result = self.collection.update({
 						'guid': vendor_guid
@@ -88,9 +92,10 @@ class MongoDBPipeline(object):
 						'$push': {'inspections': inspection}
 					})
 
+					# Check to see that it inserted correctly
 					if result['n'] is not 1:
 						logger.warn('Could not add inspection from ' + inspection['date'].strftime("%m/%d/%Y") + ' for vendor ' + vendor_guid)
 					else:
-						logger.info('Added new inspection from ' + inspection['date'].strftime("%m/%d/%Y") + ' for vendor ' + vendor_guid)
+						logger.debug('Added new inspection from ' + inspection['date'].strftime("%m/%d/%Y") + ' for vendor ' + vendor_guid)
 			else:
 				logger.warn('Attempted to add/update inspection but could not find vendor ' + vendor_guid)

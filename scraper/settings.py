@@ -3,8 +3,10 @@ import os
 SPIDER_MODULES = ['scraper.spiders']
 
 LOG_LEVEL = 'INFO'
-DOWNLOAD_DELAY = 0.5
 JOBDIR = 'job'
+AUTOTHROTTLE_ENABLED = True
+AUTOTHROTTLE_START_DELAY = 1.0
+AUTOTHROTTLE_MAX_DELAY = 10.0
 
 ITEM_PIPELINES = {'scraper.pipelines.MongoDBPipeline': 300}
 

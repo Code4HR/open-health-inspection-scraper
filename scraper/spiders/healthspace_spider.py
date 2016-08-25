@@ -16,12 +16,16 @@ class HealthSpaceSpider(scrapy.Spider):
     ]
 
     def closed(self, reason):
+        # If the spider completes successfully, cleanup the job
+        # so we can start fresh the next time
         if reason == 'finished' and 'JOBDIR' in self.settings:
                 shutil.rmtree(self.settings['JOBDIR'])
 
     def parse(self, response):
-        ### Initial parse of district pages
-        for locality in response.xpath('//tr/td'):
+        # Initial parse of district pages
+        localities = response.xpath('//tr/td')
+
+        for locality in localities:
 
             locality_info = {
                 'name': locality.xpath('./a/text()').extract_first(),
@@ -30,49 +34,58 @@ class HealthSpaceSpider(scrapy.Spider):
             }
 
             if locality_info['url']:
-                # Skip the locality splash page
+                #Skip the locality splash page
                 locality_info['url'] = parse.urljoin(locality_info['url'], 'web.nsf/module_facilities.xsp?module=Food')
 
                 yield Request(locality_info['url'], callback=self.locality_catalog_parse,
-                                                  meta={'locality_info': locality_info})
+                                                    meta={'locality_info': locality_info,
+                                                          'page_num': 1,
+                                                          'cookiejar': locality_info['name']})
+                                                          # Each locality needs a separate cookiejar
+                                                          # so that paging works correctly in the
+                                                          # catalog parse.
 
 
     def locality_catalog_parse(self,response):
         '''
         Receives the locality_info and main vendor catalog page
         Extracts all URLs from vendor page, sends each new URL
-        to the next step in the pipeline.
+        to the vendor parser.
         '''
 
         locality_info = response.meta['locality_info']
 
-        logger.info('Parsing ' + str(locality_info['name']))
+        logger.info('Parsing ' + str(locality_info['name']) + ' Page ' + str(response.meta['page_num']))
 
         # Check if another page is available for this locality, if so send
         # it back to the parser. Uses the 'Next' button on the locality
         # page, which triggers a POST request to get more vendors.
         if response.xpath('//a[contains(@id, "Next__lnk")]'):
-
             ajax_id = 'view:_id1:_id228:panel1'
 
             page_body = {
             '$$viewid': response.xpath('//form/input[@name="$$viewid"]/@value').extract_first(),
-            '$$xspexecid': response.xpath('//*[contains(@id, "Next__lnk")]/parent::span/parent::div/@id').extract_first(),
-            '$$xspsubmitid': response.xpath('//*[contains(@id, "Next__lnk")]/parent::span/@id').extract_first(),
+            '$$xspexecid': response.xpath('//a[contains(@id, "Next__lnk")]/parent::span/parent::div/@id').extract_first(),
+            '$$xspsubmitid': response.xpath('//a[contains(@id, "Next__lnk")]/parent::span/@id').extract_first(),
             '$$xspsubmitscroll': '0|0',
             '$$xspsubmitvalue': response.xpath('//form/input[@name="$$xspsubmitvalue"]/@value').extract_first(),
 
             }
 
+            # POST body includes a field that references it's own value.
             page_body[response.xpath('//form/@id').extract_first()] = response.xpath('//form/@id').extract_first()
 
             page_url = response.url + '&$$ajaxid=' + parse.quote('view:_id1:_id228:panel1')
 
             yield Request(response.url, callback=self.locality_catalog_parse,
-                            method='POST', body=parse.urlencode(page_body),
-                            meta={'locality_info':locality_info},
-                            dont_filter=True)
-
+                                        method='POST',
+                                        body=parse.urlencode(page_body),
+                                        meta={'locality_info':locality_info,
+                                              'page_num': response.meta['page_num']+1,
+                                              'cookiejar': response.meta['cookiejar']},
+                                        dont_filter=True) # Need dont_filter so the job
+                                                          # tracker will accept the same
+                                                          # URL more than once
 
         # Get HTML links
         urls = response.xpath('//tr/td/a/@href').extract()
@@ -87,12 +100,16 @@ class HealthSpaceSpider(scrapy.Spider):
             vendor_url = response.urljoin(url)
 
             yield Request(vendor_url, callback=self.vendor_parser,
-                                    meta={'locality_info':locality_info})
+                                      meta={'locality_info':locality_info,
+                                            'cookiejar': 'vendors'})
+                                            # Create a separate cookiejar for
+                                            # vendors so that the locality pages
+                                            # don't lose state.
 
 
     def vendor_parser(self,response):
         '''
-        Extracts core vendor information from pages which is then sent to the pipeline.
+        Extracts core vendor information from pages which is then processed into MongoDB.
         Also extracts links to inspections and passes that to the inspection parser.
         '''
         locality_info = response.meta['locality_info']
@@ -143,12 +160,17 @@ class HealthSpaceSpider(scrapy.Spider):
 
             inspection_url = response.urljoin(url)
 
-            yield Request(inspection_url, callback=self.inspection_parser, meta={'vendor_guid':vendor_loader.get_output_value('guid')})
+            yield Request(inspection_url, callback=self.inspection_parser,
+                                          meta={'vendor_guid':vendor_loader.get_output_value('guid'),
+                                                'cookiejar': 'inspections'})
+                                                # Create a separate cookiejar for
+                                                # inspections so that the locality pages
+                                                # don't lose state.
 
 
     def inspection_parser(self, response):
         '''
-        Extracts core inspection and violation data which is passed to the pipeline.
+        Extracts core inspection and violation data which is processed into MongoDB.
         '''
 
         inspection_loader = InspectionItemLoader(response=response)
