@@ -1,4 +1,0 @@
-beautifulsoup4==4.3.2
-pymongo==2.6.3
-python-slugify==0.0.7
-scraperwiki==0.3.8

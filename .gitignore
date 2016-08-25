@@ -1,9 +1,11 @@
 
-*.sqlite
-
-scraper/config.json
+*.json
 
 *.pyc
 
 *~
 **/*~
+
+job/
+
+__pycache__/
