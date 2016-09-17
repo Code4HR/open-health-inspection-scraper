@@ -19,6 +19,9 @@ class Scoring(object):
 		)
 
         db = connection[settings['MONGODB_DB']]
+		if settings['MONGODB_USER'] and settings['MONGODB_PWD']:
+			db.authenticate(settings['MONGODB_USER'], settings['MONGODB_PWD'])
+            
         self.collection = db[settings['MONGODB_COLLECTION']]
 
         '''

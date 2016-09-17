@@ -11,9 +11,14 @@ class MongoDBPipeline(object):
 
 	def __init__(self):
 		settings = get_project_settings()
+		
 		connection = MongoClient(host=settings['MONGODB_SERVER'],
 		                         port=int(settings['MONGODB_PORT']))
+
 		db = connection[settings['MONGODB_DB']]
+		if settings['MONGODB_USER'] and settings['MONGODB_PWD']:
+			db.authenticate(settings['MONGODB_USER'], settings['MONGODB_PWD'])
+
 		self.collection = db[settings['MONGODB_COLLECTION']]
 
 

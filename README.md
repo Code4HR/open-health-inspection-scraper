@@ -13,7 +13,7 @@ To run:
 1. Run `pip install -r requirements.txt` to install the necessary dependencies.
 
 2. Set the following environment variables or use the defaults in `scraper/settings.py`:
-   
+
    ```
    MONGODB_SERVER
    MONGODB_PORT
@@ -21,6 +21,13 @@ To run:
    MONGODB_COLLECTION
    ```
 
+   If you need MongoDB authentication, also set
+
+   ```
+   MONGODB_USER
+   MONGODB_PWD
+   ```
+   
    If you want to use the SmartyStreets geocoding integration, also set the following environment variables:
 
    ```
