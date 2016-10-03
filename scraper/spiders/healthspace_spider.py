@@ -3,6 +3,7 @@ import logging
 import shutil
 from scrapy import Selector, Request
 from scraper.helpers import vendor_helpers, inspection_helpers
+from scraper.helpers.scoring import Scoring
 from scraper.items import VendorItemLoader, InspectionItemLoader
 from urllib import parse
 
@@ -20,6 +21,8 @@ class HealthSpaceSpider(scrapy.Spider):
         # so we can start fresh the next time
         if reason == 'finished' and 'JOBDIR' in self.settings:
                 shutil.rmtree(self.settings['JOBDIR'])
+                scoring = Scoring()
+                scoring.score_vendors()
 
     def parse(self, response):
         # Initial parse of district pages

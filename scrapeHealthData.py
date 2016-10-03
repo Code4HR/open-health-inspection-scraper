@@ -11,6 +11,3 @@ process = CrawlerProcess(settings)
 
 process.crawl(HealthSpaceSpider)
 process.start()
-
-scoring = Scoring()
-scoring.score_vendors()
