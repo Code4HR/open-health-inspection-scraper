@@ -5,13 +5,13 @@ from scraper.items import VendorItem, InspectionItem
 from datetime import datetime
 from scrapy.utils.project import get_project_settings
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('Mongo Pipeline')
 
 class MongoDBPipeline(object):
 
 	def __init__(self):
 		settings = get_project_settings()
-		
+
 		connection = MongoClient(host=settings['MONGODB_SERVER'],
 		                         port=int(settings['MONGODB_PORT']))
 

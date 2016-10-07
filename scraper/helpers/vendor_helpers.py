@@ -7,7 +7,7 @@ from urllib import parse, request
 from slugify import slugify
 from scrapy.utils.project import get_project_settings
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('Vendor Helpers')
 
 def connect_db():
 		settings = get_project_settings()
@@ -44,10 +44,12 @@ def get_function_urls(script):
 
 
 def vendor_address(location):
-    return location.split(',')[0].strip()
+	parts = location.split(',')
+	return ','.join(parts[0:(len(parts)-2)]).strip()
 
 def vendor_city(location):
-    return location.split(',')[1].split('VA')[0].strip()
+	parts = location.split(',')
+	return parts[len(parts)-2].split('VA')[0].strip()
 
 def vendor_search_name(name):
     return slugify(name, separator = ' ')
@@ -74,6 +76,7 @@ def get_lat_lng(address):
         if ss_id is not None and ss_token is not None:
             # If address is a PO Box, skip
             if re.search('P(\.)?O(\.)?(\sBox\s)[0-9]+', address['street']) is None and address['street'] != '':
+                logger.debug(address)
                 url = 'https://api.smartystreets.com/street-address?'
                 url += 'state=' + parse.quote(address['state'])
                 url += '&city=' + parse.quote(address['city'])
@@ -89,7 +92,7 @@ def get_lat_lng(address):
                     lat_lng = {'lat': data[0]['metadata']['latitude'], 'lng': data[0]['metadata']['longitude']}
                     return lat_lng
                 else:
-                    logger.warn('Could not geocode address ' + str(address))
+                    logger.debug('Could not geocode address ' + str(address))
                     logger.debug(response.status)
                     logger.debug(response.info())
                     logger.debug(data)

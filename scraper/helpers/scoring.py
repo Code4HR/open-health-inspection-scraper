@@ -9,7 +9,7 @@ class Scoring(object):
         settings = get_project_settings()
 
 
-        self.score_logger = logging.getLogger(__name__)
+        self.score_logger = logging.getLogger('Scoring')
         self.score_logger.setLevel(logging.INFO)
 
         # Set up database connection (pulled from settings)

@@ -7,7 +7,7 @@ from scraper.helpers.scoring import Scoring
 from scraper.items import VendorItemLoader, InspectionItemLoader
 from urllib import parse
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('Healthspace Spider')
 
 class HealthSpaceSpider(scrapy.Spider):
     name = "healthspace"
