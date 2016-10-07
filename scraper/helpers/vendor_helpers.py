@@ -2,11 +2,25 @@ import scrapy
 import re
 import json
 import logging
+from pymongo import MongoClient
 from urllib import parse, request
 from slugify import slugify
 from scrapy.utils.project import get_project_settings
 
 logger = logging.getLogger(__name__)
+
+def connect_db():
+		settings = get_project_settings()
+
+		connection = MongoClient(host=settings['MONGODB_SERVER'],
+		                         port=int(settings['MONGODB_PORT']))
+
+		db = connection[settings['MONGODB_DB']]
+		if settings['MONGODB_USER'] and settings['MONGODB_PWD']:
+			db.authenticate(settings['MONGODB_USER'], settings['MONGODB_PWD'])
+
+		return db[settings['MONGODB_COLLECTION']]
+
 
 def get_urls(self,response):
     # Returns absolute URLS from Javascript
@@ -30,10 +44,10 @@ def get_function_urls(script):
 
 
 def vendor_address(location):
-    return location.split(',')[0]
+    return location.split(',')[0].strip()
 
 def vendor_city(location):
-    return location.split(',')[1].split('VA')[0].rstrip()
+    return location.split(',')[1].split('VA')[0].strip()
 
 def vendor_search_name(name):
     return slugify(name, separator = ' ')
@@ -47,38 +61,58 @@ def vendor_guid(url):
 	return None
 
 def get_lat_lng(address):
-    # Take a dict of address parts and call SmartyStreets to geocode it.
-    settings = get_project_settings()
 
-    ss_id = settings['SS_ID']
-    ss_token = settings['SS_TOKEN']
-    address = {k: str(v).strip() for k, v in address.items()}
+    existing_lat_lng = address_compare(address)
 
-    if ss_id is not None and ss_token is not None:
-        # If address is a PO Box, skip
-        if re.search('P(\.)?O(\.)?(\sBox\s)[0-9]+', address['street']) is None and address['street'] != '':
-            url = 'https://api.smartystreets.com/street-address?'
-            url += 'state=' + parse.quote(address['state'])
-            url += '&city=' + parse.quote(address['city'])
-            url += '&auth-id=' + str(ss_id)
-            url += '&auth-token=' + str(ss_token)
-            url += '&street=' + parse.quote(address['street'])
+    if existing_lat_lng is None:
+        # Take a dict of address parts and call SmartyStreets to geocode it.
+        settings = get_project_settings()
 
-            response = request.urlopen(url)
-            data = json.loads(response.read().decode('utf-8'))
+        ss_id = settings['SS_ID']
+        ss_token = settings['SS_TOKEN']
 
-            if len(data) == 1:
-                logger.debug('Geocoded ' + str(address))
-                lat_lng = {'lat': data[0]['metadata']['latitude'], 'lng': data[0]['metadata']['longitude']}
-                return lat_lng
-            else:
-                logger.warn('Could not geocode address ' + str(address))
-                logger.debug(response.status)
-                logger.debug(response.info())
-                logger.debug(data)
+        if ss_id is not None and ss_token is not None:
+            # If address is a PO Box, skip
+            if re.search('P(\.)?O(\.)?(\sBox\s)[0-9]+', address['street']) is None and address['street'] != '':
+                url = 'https://api.smartystreets.com/street-address?'
+                url += 'state=' + parse.quote(address['state'])
+                url += '&city=' + parse.quote(address['city'])
+                url += '&auth-id=' + str(ss_id)
+                url += '&auth-token=' + str(ss_token)
+                url += '&street=' + parse.quote(address['street'])
+
+                response = request.urlopen(url)
+                data = json.loads(response.read().decode('utf-8'))
+
+                if len(data) == 1:
+                    logger.debug('Geocoded ' + str(address))
+                    lat_lng = {'lat': data[0]['metadata']['latitude'], 'lng': data[0]['metadata']['longitude']}
+                    return lat_lng
+                else:
+                    logger.warn('Could not geocode address ' + str(address))
+                    logger.debug(response.status)
+                    logger.debug(response.info())
+                    logger.debug(data)
+        return None
+
+    logger.debug('Address is current and has already been geocoded')
+    return existing_lat_lng
+
+
+def address_compare(address):
+    collection = connect_db()
+
+    existing = collection.find_one({
+        'guid': address['guid'],
+        'address': address['street'],
+        'city': address['city'],
+        'geo': { '$exists': True }
+    }, {'geo': 1})
+
+    if existing is not None:
+        return existing['geo']
+
     return None
-
-
 
 def vendor_category(type):
     # Lookup the vendor type in a dict and return a broader category
