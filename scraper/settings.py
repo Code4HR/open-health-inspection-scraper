@@ -18,5 +18,5 @@ MONGODB_PWD = os.getenv('MONGODB_PWD', None)
 MONGODB_DB = os.getenv('MONGODB_DB', 'healthdata')
 MONGODB_COLLECTION = os.getenv('MONGODB_COLLECTION', 'va')
 
-SS_ID = os.getenv('SSID', None)
+SS_ID = os.getenv('SS_ID', None)
 SS_TOKEN = os.getenv('SS_TOKEN', None)

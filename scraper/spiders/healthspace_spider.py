@@ -13,7 +13,8 @@ class HealthSpaceSpider(scrapy.Spider):
     name = "healthspace"
     allowed_domains = ["healthspace.com"]
     start_urls = [
-        "http://healthspace.com/Clients/VDH/VDH/web.nsf/module_healthRegions.xsp"
+        #"http://healthspace.com/Clients/VDH/VDH/web.nsf/module_healthRegions.xsp"
+        "http://healthspace.com/Clients/VDH/VBeach/web.nsf/module_facilities.xsp?module=Food"
     ]
 
     def closed(self, reason):
@@ -21,29 +22,34 @@ class HealthSpaceSpider(scrapy.Spider):
         # so we can start fresh the next time
         if reason == 'finished' and 'JOBDIR' in self.settings:
                 shutil.rmtree(self.settings['JOBDIR'])
-                scoring = Scoring()
-                scoring.score_vendors()
+                #scoring = Scoring()
+                #scoring.score_vendors()
 
     def parse(self, response):
+
+            yield Request(response.url, callback=self.locality_catalog_parse,
+                                                meta={'locality_info': {'name': 'Virginia Beach', 'url': response.url, 'id': 'view:_id1:_id183:repeatRegions:31:regionLink1'},
+                                                      'page_num': 1,
+                                                      'cookiejar': 'Virginia Beach'})
         # Initial parse of district pages
-        localities = response.xpath('//tr/td')
+        #localities = response.xpath('//tr/td')
 
-        for locality in localities:
+        #for locality in localities:
 
-            locality_info = {
-                'name': locality.xpath('./a/text()').extract_first(),
-                'url': locality.xpath('./a/@href').extract_first(),
-                'id': locality.xpath('./a/@id').extract_first()
-            }
+            #locality_info = {
+            #    'name': locality.xpath('./a/text()').extract_first(),
+            #    'url': locality.xpath('./a/@href').extract_first(),
+            #    'id': locality.xpath('./a/@id').extract_first()
+            #}
 
-            if locality_info['url']:
+            #if locality_info['url']:
                 #Skip the locality splash page
-                locality_info['url'] = parse.urljoin(locality_info['url'], 'web.nsf/module_facilities.xsp?module=Food')
+            #    locality_info['url'] = parse.urljoin(locality_info['url'], 'web.nsf/module_facilities.xsp?module=Food')
 
-                yield Request(locality_info['url'], callback=self.locality_catalog_parse,
-                                                    meta={'locality_info': locality_info,
-                                                          'page_num': 1,
-                                                          'cookiejar': locality_info['name']})
+            #    yield Request(locality_info['url'], callback=self.locality_catalog_parse,
+            #                                        meta={'locality_info': locality_info,
+            #                                              'page_num': 1,
+            #                                              'cookiejar': locality_info['name']})
                                                           # Each locality needs a separate cookiejar
                                                           # so that paging works correctly in the
                                                           # catalog parse.

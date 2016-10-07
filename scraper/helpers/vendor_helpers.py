@@ -1,11 +1,12 @@
 import scrapy
 import re
 import json
+import logging
 from urllib import parse, request
 from slugify import slugify
 from scrapy.utils.project import get_project_settings
 
-settings = get_project_settings()
+logger = logging.getLogger(__name__)
 
 def get_urls(self,response):
     # Returns absolute URLS from Javascript
@@ -47,26 +48,34 @@ def vendor_guid(url):
 
 def get_lat_lng(address):
     # Take a dict of address parts and call SmartyStreets to geocode it.
+    settings = get_project_settings()
+
     ss_id = settings['SS_ID']
     ss_token = settings['SS_TOKEN']
+    address = {k: str(v).strip() for k, v in address.items()}
 
     if ss_id is not None and ss_token is not None:
         # If address is a PO Box, skip
         if re.search('P(\.)?O(\.)?(\sBox\s)[0-9]+', address['street']) is None and address['street'] != '':
             url = 'https://api.smartystreets.com/street-address?'
-            url += 'state=' + parse.quote(str(address['state']))
-            url += '&city=' + parse.quote(str(address['city']))
+            url += 'state=' + parse.quote(address['state'])
+            url += '&city=' + parse.quote(address['city'])
             url += '&auth-id=' + str(ss_id)
             url += '&auth-token=' + str(ss_token)
-            url += '&street=' + parse.quote(str(address['street']))
+            url += '&street=' + parse.quote(address['street'])
 
             response = request.urlopen(url)
             data = json.loads(response.read().decode('utf-8'))
 
             if len(data) == 1:
+                logger.debug('Geocoded ' + str(address))
                 lat_lng = {'lat': data[0]['metadata']['latitude'], 'lng': data[0]['metadata']['longitude']}
                 return lat_lng
-
+            else:
+                logger.warn('Could not geocode address ' + str(address))
+                logger.debug(response.status)
+                logger.debug(response.info())
+                logger.debug(data)
     return None
 
 
