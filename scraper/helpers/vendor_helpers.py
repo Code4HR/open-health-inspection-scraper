@@ -67,35 +67,36 @@ def get_lat_lng(address):
     existing_lat_lng = address_compare(address)
 
     if existing_lat_lng is None:
-        # Take a dict of address parts and call SmartyStreets to geocode it.
-        settings = get_project_settings()
+		if address['street'] is not None and address['city'] is not None:
+	        # Take a dict of address parts and call SmartyStreets to geocode it.
+	        settings = get_project_settings()
 
-        ss_id = settings['SS_ID']
-        ss_token = settings['SS_TOKEN']
+	        ss_id = settings['SS_ID']
+	        ss_token = settings['SS_TOKEN']
 
-        if ss_id is not None and ss_token is not None:
-            # If address is a PO Box, skip
-            if re.search('P(\.)?O(\.)?(\sBox\s)[0-9]+', address['street']) is None and address['street'] != '':
-                logger.debug(address)
-                url = 'https://api.smartystreets.com/street-address?'
-                url += 'state=' + parse.quote(address['state'])
-                url += '&city=' + parse.quote(address['city'])
-                url += '&auth-id=' + str(ss_id)
-                url += '&auth-token=' + str(ss_token)
-                url += '&street=' + parse.quote(address['street'])
+	        if ss_id is not None and ss_token is not None:
+	            # If address is a PO Box, skip
+	            if re.search('P(\.)?O(\.)?(\sBox\s)[0-9]+', address['street']) is None and address['street'] != '':
+	                logger.debug(address)
+	                url = 'https://api.smartystreets.com/street-address?'
+	                url += 'state=' + parse.quote(address['state'])
+	                url += '&city=' + parse.quote(address['city'])
+	                url += '&auth-id=' + str(ss_id)
+	                url += '&auth-token=' + str(ss_token)
+	                url += '&street=' + parse.quote(address['street'])
 
-                response = request.urlopen(url)
-                data = json.loads(response.read().decode('utf-8'))
+	                response = request.urlopen(url)
+	                data = json.loads(response.read().decode('utf-8'))
 
-                if len(data) == 1:
-                    logger.debug('Geocoded ' + str(address))
-                    lat_lng = {'lat': data[0]['metadata']['latitude'], 'lng': data[0]['metadata']['longitude']}
-                    return lat_lng
-                else:
-                    logger.debug('Could not geocode address ' + str(address))
-                    logger.debug(response.status)
-                    logger.debug(response.info())
-                    logger.debug(data)
+	                if len(data) == 1:
+	                    logger.debug('Geocoded ' + str(address))
+	                    lat_lng = {'lat': data[0]['metadata']['latitude'], 'lng': data[0]['metadata']['longitude']}
+	                    return lat_lng
+	                else:
+	                    logger.debug('Could not geocode address ' + str(address))
+	                    logger.debug(response.status)
+	                    logger.debug(response.info())
+	                    logger.debug(data)
         return None
 
     logger.debug('Address is current and has already been geocoded')
