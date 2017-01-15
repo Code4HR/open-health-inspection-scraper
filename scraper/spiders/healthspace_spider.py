@@ -21,7 +21,7 @@ class HealthSpaceSpider(scrapy.Spider):
         # so we can start fresh the next time
         if reason == 'finished' and 'JOBDIR' in self.settings:
                 shutil.rmtree(self.settings['JOBDIR'])
-                scoring = Scoring()
+                scoring = Scoring(self.settings)
                 scoring.score_vendors()
 
     def parse(self, response):

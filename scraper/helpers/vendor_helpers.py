@@ -10,16 +10,16 @@ from scrapy.utils.project import get_project_settings
 logger = logging.getLogger('Vendor Helpers')
 
 def connect_db():
-		settings = get_project_settings()
+    settings = get_project_settings()
 
-		connection = MongoClient(host=settings['MONGODB_SERVER'],
-		                         port=int(settings['MONGODB_PORT']))
+    connection = MongoClient(host=settings['MONGODB_SERVER'],
+                             port=int(settings['MONGODB_PORT']))
 
-		db = connection[settings['MONGODB_DB']]
-		if settings['MONGODB_USER'] and settings['MONGODB_PWD']:
-			db.authenticate(settings['MONGODB_USER'], settings['MONGODB_PWD'])
+    db = connection[settings['MONGODB_DB']]
+    if settings['MONGODB_USER'] and settings['MONGODB_PWD']:
+        db.authenticate(settings['MONGODB_USER'], settings['MONGODB_PWD'])
 
-		return db[settings['MONGODB_COLLECTION']]
+    return db[settings['MONGODB_COLLECTION']]
 
 
 def get_urls(self,response):
@@ -44,59 +44,60 @@ def get_function_urls(script):
 
 
 def vendor_address(location):
-	parts = location.split(',')
-	return ','.join(parts[0:(len(parts)-2)]).strip()
+    parts = location.split(',')
+    return ','.join(parts[0:(len(parts)-2)]).strip()
 
 def vendor_city(location):
-	parts = location.split(',')
-	return parts[len(parts)-2].split('VA')[0].strip()
+    parts = location.split(',')
+    return parts[len(parts)-2].split('VA')[0].strip()
 
 def vendor_search_name(name):
     return slugify(name, separator = ' ')
 
 def vendor_guid(url):
-	if url:
-		matches = re.match('(http://healthspace.com/Clients/VDH/)(.*)(/web.nsf/formFacility.xsp\?id=)(.*)',url, flags=re.I)
-		if matches:
-			return matches.group(4)
+    if url:
+        matches = re.match('(http://healthspace.com/Clients/VDH/)(.*)(/web.nsf/formFacility.xsp\?id=)(.*)',url, flags=re.I)
+        if matches:
+            return matches.group(4)
 
-	return None
+    return None
 
 def get_lat_lng(address):
 
     existing_lat_lng = address_compare(address)
 
     if existing_lat_lng is None:
-		if address['street'] is not None and address['city'] is not None:
-	        # Take a dict of address parts and call SmartyStreets to geocode it.
-	        settings = get_project_settings()
+        if address['street'] is not None and address['city'] is not None:
+            # Take a dict of address parts and call SmartyStreets to geocode it.
+            settings = get_project_settings()
 
-	        ss_id = settings['SS_ID']
-	        ss_token = settings['SS_TOKEN']
+            ss_id = settings['SS_ID']
+            ss_token = settings['SS_TOKEN']
 
-	        if ss_id is not None and ss_token is not None:
-	            # If address is a PO Box, skip
-	            if re.search('P(\.)?O(\.)?(\sBox\s)[0-9]+', address['street']) is None and address['street'] != '':
-	                logger.debug(address)
-	                url = 'https://api.smartystreets.com/street-address?'
-	                url += 'state=' + parse.quote(address['state'])
-	                url += '&city=' + parse.quote(address['city'])
-	                url += '&auth-id=' + str(ss_id)
-	                url += '&auth-token=' + str(ss_token)
-	                url += '&street=' + parse.quote(address['street'])
+            if ss_id is not None and ss_token is not None:
+                # If address is a PO Box, skip
+                if re.search('P(\.)?O(\.)?(\sBox\s)[0-9]+', address['street']) is None and address['street'] != '':
+                    logger.debug(address)
+                    url = 'https://api.smartystreets.com/street-address?'
+                    url += 'state=' + parse.quote(address['state'])
+                    url += '&city=' + parse.quote(address['city'])
+                    url += '&auth-id=' + str(ss_id)
+                    url += '&auth-token=' + str(ss_token)
+                    url += '&street=' + parse.quote(address['street'])
 
-	                response = request.urlopen(url)
-	                data = json.loads(response.read().decode('utf-8'))
+                    response = request.urlopen(url)
+                    data = json.loads(response.read().decode('utf-8'))
 
-	                if len(data) == 1:
-	                    logger.debug('Geocoded ' + str(address))
-	                    lat_lng = {'lat': data[0]['metadata']['latitude'], 'lng': data[0]['metadata']['longitude']}
-	                    return lat_lng
-	                else:
-	                    logger.debug('Could not geocode address ' + str(address))
-	                    logger.debug(response.status)
-	                    logger.debug(response.info())
-	                    logger.debug(data)
+                    if len(data) == 1:
+                        logger.debug('Geocoded ' + str(address))
+                        lat_lng = {'type': 'Point',
+                                   'coordinates': [data[0]['metadata']['longitude'], data[0]['metadata']['latitude']]}
+                        return lat_lng
+                    else:
+                        logger.debug('Could not geocode address ' + str(address))
+                        logger.debug(response.status)
+                        logger.debug(response.info())
+                        logger.debug(data)
         return None
 
     logger.debug('Address is current and has already been geocoded')
@@ -120,7 +121,7 @@ def address_compare(address):
 
 def vendor_category(type):
     # Lookup the vendor type in a dict and return a broader category
-	categories = {'Adult care home food service': 'Medical',
+    categories = {'Adult care home food service': 'Medical',
                   'Adult Care Home Food Service': 'Medical',
                   'Adult Day Care Food Service': 'Medical',
                   'Bed & Breakfast': 'Hospitality',
@@ -170,7 +171,7 @@ def vendor_category(type):
                   'Summer Food Service Program Feeding Site': 'Education',
                   'Summer Food Service Program Kitchen': 'Education'}
 
-	if type in categories:
-		return categories[type]
-	else:
-		return 'Other'
+    if type in categories:
+        return categories[type]
+    else:
+        return 'Other'
