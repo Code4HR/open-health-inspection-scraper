@@ -5,6 +5,7 @@ import logging
 from pymongo import MongoClient
 from urllib import parse, request
 from slugify import slugify
+from datetime import datetime
 from scrapy.utils.project import get_project_settings
 
 logger = logging.getLogger('Vendor Helpers')
@@ -102,6 +103,26 @@ def get_lat_lng(address):
 
     logger.debug('Address is current and has already been geocoded')
     return existing_lat_lng
+
+
+def needs_geocoding(address):
+    existing_lat_lng = address_compare(address)
+
+    if existing_lat_lng is None:
+        if address['street'] is not None and address['city'] is not None:
+            if re.search('P(\.)?O(\.)?(\sBox\s)[0-9]+', address['street']) is None and address['street'] != '':
+                return True
+    return None
+
+
+def needs_geocoding_date(address):
+    existing_lat_lng = address_compare(address)
+
+    if existing_lat_lng is None:
+        if address['street'] is not None and address['city'] is not None:
+            if re.search('P(\.)?O(\.)?(\sBox\s)[0-9]+', address['street']) is None and address['street'] != '':
+                return datetime.utcnow()
+    return None
 
 
 def address_compare(address):

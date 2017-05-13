@@ -70,10 +70,18 @@ class VendorItem(Item):
 		output_processor=TakeFirst()
 	)
 	geo = Field(
-		input_processor=MapCompose(get_lat_lng),
+		# disable geocoding until SmartyStreets replacement is found
+		#input_processor=MapCompose(get_lat_lng),
+		#output_processor=TakeFirst()
+	)
+	needs_geocoding = Field(
+		input_processor=MapCompose(needs_geocoding),
 		output_processor=TakeFirst()
 	)
-
+	needs_geocoding_date = Field(
+		input_processor=MapCompose(needs_geocoding_date),
+		output_processor=TakeFirst()
+	)
 	inspections = Field()
 
 class VendorItemLoader(ItemLoader):

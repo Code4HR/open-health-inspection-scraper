@@ -145,7 +145,10 @@ class HealthSpaceSpider(scrapy.Spider):
             'state': 'VA'
         }
 
-        vendor_loader.add_value('geo', address)
+        # Removed geocoding until a SmartyStreets replacement is found
+        #vendor_loader.add_value('geo', address)
+        vendor_loader.add_value('needs_geocoding', address)
+        vendor_loader.add_value('needs_geocoding_date', address)
 
         # Load vendor info
         yield vendor_loader.load_item()
