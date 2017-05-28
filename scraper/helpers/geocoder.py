@@ -46,3 +46,12 @@ if google_api_key is not None:
                             'geo': lat_lng,
                             'needs_geocoding': False,
                             'needs_geocoding_date': None}})
+
+                else:
+
+                    print('Geocoding returned ' + str(len(data['results'])) + ' results')
+                    collection.update({
+                        'guid': vendor['guid']
+                    }, {'$set': {
+                            'needs_geocoding': False,
+                            'needs_geocoding_date': None}})
