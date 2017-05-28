@@ -20,3 +20,5 @@ MONGODB_COLLECTION = os.getenv('MONGODB_COLLECTION', 'va')
 
 SS_ID = os.getenv('SS_ID', None)
 SS_TOKEN = os.getenv('SS_TOKEN', None)
+
+GOOGLE_API_KEY = os.getenv('GOOGLE_API_KEY', None)
